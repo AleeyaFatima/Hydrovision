@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     PORT: int = 8000
     HOST: str = "0.0.0.0"
-    CORS_ORIGINS: str = "http://localhost:3000"
+    CORS_ORIGINS: str = "http://localhost:3000,https://aquamap-chi.vercel.app"
 
     # Paths
     BASE_DIR: Path = BASE_DIR
