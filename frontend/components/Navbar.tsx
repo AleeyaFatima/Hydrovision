@@ -36,12 +36,26 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Check model health from backend
+  // Check model health from backend with automatic retry/polling
+  const checkHealth = async () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://hydrovision-qcmu.onrender.com";
+    try {
+      const res = await fetch(`${apiUrl}/health`, { signal: AbortSignal.timeout(10000) });
+      if (res.ok) {
+        setModelOnline(true);
+      } else {
+        setModelOnline(false);
+      }
+    } catch {
+      setModelOnline(false);
+    }
+  };
+
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-    fetch(`${apiUrl}/health`, { signal: AbortSignal.timeout(3000) })
-      .then((r) => r.ok && setModelOnline(true))
-      .catch(() => setModelOnline(false));
+    checkHealth();
+    // Poll every 10 seconds to catch Render cold-starts automatically
+    const interval = setInterval(checkHealth, 10000);
+    return () => clearInterval(interval);
   }, []);
 
   const navLinks = [
@@ -110,27 +124,40 @@ export function Navbar() {
         {/* Right Actions */}
         <div className="flex items-center gap-3">
           {/* Live Model Status Pill */}
-          <div
-            className={`hidden lg:flex items-center gap-2 rounded-full px-3 py-1 text-xs font-mono border transition-all ${
+          <button
+            onClick={checkHealth}
+            className={`hidden lg:flex items-center gap-2 rounded-full px-3 py-1 text-xs font-mono border transition-all cursor-pointer ${
               modelOnline === true
                 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                : "border-[#1E334B] bg-[#0A1424] text-slate-400"
+                : modelOnline === null
+                ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                : "border-[#1E334B] bg-[#0A1424] text-slate-400 hover:border-cyan-500/40"
             }`}
             title={
               modelOnline === true
                 ? "Backend API online (FastAPI + ONNX)"
-                : "Offline simulation mode (pre-computed neural predictions)"
+                : modelOnline === null
+                ? "Connecting to Render backend..."
+                : "Backend is waking up or offline. Click to re-check status."
             }
           >
             <div
               className={`h-2 w-2 rounded-full ${
                 modelOnline === true
                   ? "bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse"
+                  : modelOnline === null
+                  ? "bg-amber-400 animate-pulse"
                   : "bg-slate-500"
               }`}
             />
-            <span>{modelOnline === true ? "Model online" : "Offline mode"}</span>
-          </div>
+            <span>
+              {modelOnline === true
+                ? "Model online"
+                : modelOnline === null
+                ? "Connecting…"
+                : "Offline mode"}
+            </span>
+          </button>
 
           {/* Primary CTA (Cyan to Neon Violet) */}
           <Link
@@ -163,18 +190,33 @@ export function Navbar() {
         >
           <div className="flex items-center justify-between pb-3 border-b border-[#1E334B]">
             <span className="text-label text-slate-400">Navigation</span>
-            <div
+            <button
+              onClick={checkHealth}
               className={`flex items-center gap-1.5 text-xs font-mono font-medium ${
-                modelOnline === true ? "text-emerald-400" : "text-slate-400"
+                modelOnline === true
+                  ? "text-emerald-400"
+                  : modelOnline === null
+                  ? "text-amber-300"
+                  : "text-slate-400"
               }`}
             >
               <div
                 className={`h-2 w-2 rounded-full ${
-                  modelOnline === true ? "bg-emerald-400 animate-pulse" : "bg-slate-500"
+                  modelOnline === true
+                    ? "bg-emerald-400 animate-pulse"
+                    : modelOnline === null
+                    ? "bg-amber-400 animate-pulse"
+                    : "bg-slate-500"
                 }`}
               />
-              <span>{modelOnline === true ? "Model online" : "Offline mode"}</span>
-            </div>
+              <span>
+                {modelOnline === true
+                  ? "Model online"
+                  : modelOnline === null
+                  ? "Connecting…"
+                  : "Offline mode"}
+              </span>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 gap-1 pt-1">
