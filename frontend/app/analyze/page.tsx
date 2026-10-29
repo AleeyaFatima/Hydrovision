@@ -407,29 +407,31 @@ export default function AnalyzePage() {
 
         {/* Right: Viewer */}
         <div className="lg:col-span-7 space-y-5">
-          {/* Layer toggles */}
-          <div className="flex flex-wrap gap-2">
-            {(["overlay", "mask", "uncertainty", "gradcam"] as ActiveLayer[]).map((layer) => (
-              <button
-                key={layer}
-                onClick={() => setActiveLayer(layer)}
-                className="rounded-full px-4 py-1.5 text-sm font-medium transition-all"
-                style={{
-                  background: activeLayer === layer ? "rgba(34,211,238,0.15)" : "var(--surface-1)",
-                  color: activeLayer === layer ? "var(--water)" : "var(--text-2)",
-                  border: `1px solid ${activeLayer === layer ? "rgba(34,211,238,0.3)" : "var(--border)"}`,
-                }}
-              >
-                {LAYER_LABELS[layer]}
-              </button>
-            ))}
-            <div className="flex items-center gap-3 ml-auto text-xs" style={{ color: "var(--text-muted)" }}>
+          {/* Layer toggles - Mobile Responsive */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-1.5 sm:gap-2">
+              {(["overlay", "mask", "uncertainty", "gradcam"] as ActiveLayer[]).map((layer) => (
+                <button
+                  key={layer}
+                  onClick={() => setActiveLayer(layer)}
+                  className="rounded-full px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-medium transition-all"
+                  style={{
+                    background: activeLayer === layer ? "rgba(34,211,238,0.15)" : "var(--surface-1)",
+                    color: activeLayer === layer ? "var(--water)" : "var(--text-2)",
+                    border: `1px solid ${activeLayer === layer ? "rgba(34,211,238,0.3)" : "var(--border)"}`,
+                  }}
+                >
+                  {LAYER_LABELS[layer]}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-3 text-xs" style={{ color: "var(--text-muted)" }}>
               <span className="flex items-center gap-1">
-                <span className="inline-block h-3 w-3 rounded-sm" style={{ background: "var(--water)" }} />
+                <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: "var(--water)" }} />
                 Water mask
               </span>
               <span className="flex items-center gap-1">
-                <span className="inline-block h-3 w-3 rounded-sm" style={{ background: "var(--uncertain)" }} />
+                <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: "var(--uncertain)" }} />
                 Uncertain
               </span>
             </div>

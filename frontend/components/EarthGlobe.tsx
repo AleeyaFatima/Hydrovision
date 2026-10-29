@@ -83,8 +83,8 @@ export function EarthGlobe() {
     }
 
     const container = containerRef.current;
-    const width = container.clientWidth || 450;
-    const height = container.clientHeight || 450;
+    const width = container.clientWidth || 320;
+    const height = container.clientHeight || 320;
 
     // Scene, Camera, Renderer
     const scene = new THREE.Scene();
@@ -329,16 +329,16 @@ export function EarthGlobe() {
       {/* Ambient background glow behind globe */}
       <div className="absolute inset-0 -m-8 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
 
-      {/* 3D Canvas Container */}
+      {/* 3D Canvas Container - fully responsive down to 320px screens */}
       <div
         ref={containerRef}
-        className="relative h-[380px] w-[380px] sm:h-[440px] sm:w-[440px] cursor-grab active:cursor-grabbing select-none"
+        className="relative w-full max-w-[320px] h-[320px] sm:max-w-[420px] sm:h-[420px] cursor-grab active:cursor-grabbing select-none"
       />
 
       {/* Clean Telemetry Tag underneath */}
-      <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#07101E]/80 px-3.5 py-1 text-[11px] font-mono text-slate-400 backdrop-blur-md">
-        <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
-        <span>Global Optical & Drone Telemetry • Drag to Rotate</span>
+      <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#07101E]/80 px-3 py-1 text-[10px] sm:text-[11px] font-mono text-slate-400 backdrop-blur-md max-w-full truncate">
+        <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
+        <span className="truncate">Optical Drone Telemetry • Drag to Rotate</span>
       </div>
     </div>
   );

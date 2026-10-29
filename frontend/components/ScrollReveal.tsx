@@ -69,20 +69,20 @@ export function ScrollReveal() {
 
   return (
     <div className="w-full space-y-3">
-      {/* 3-Way Mode Toggle Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 px-1">
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#07101E] border border-white/10">
+      {/* 3-Way Mode Toggle Controls - 100% Mobile Responsive */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-0.5">
+        <div className="flex items-center gap-1 p-1 rounded-xl bg-[#07101E] border border-white/10 w-full sm:w-auto">
           {(
             [
-              { id: "prediction", label: "Prediction (U-Net)", color: "text-cyan-400" },
-              { id: "groundtruth", label: "Ground Truth", color: "text-emerald-400" },
-              { id: "error", label: "Error Map", color: "text-rose-400" },
+              { id: "prediction", label: "Prediction" },
+              { id: "groundtruth", label: "Ground Truth" },
+              { id: "error", label: "Error Map" },
             ] as const
           ).map((t) => (
             <button
               key={t.id}
               onClick={() => setMode(t.id)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
+              className={`flex-1 sm:flex-initial text-center rounded-lg px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap transition-all ${
                 mode === t.id
                   ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 shadow-sm"
                   : "text-slate-400 hover:text-white border border-transparent"
@@ -179,24 +179,24 @@ export function ScrollReveal() {
           </div>
         </div>
 
-        {/* Top Floating Telemetry Overlay HUD */}
-        <div className="pointer-events-none absolute top-4 left-4 right-4 flex flex-wrap items-center justify-between gap-2">
+        {/* Top Floating Telemetry Overlay HUD - Mobile Responsive */}
+        <div className="pointer-events-none absolute top-2.5 sm:top-4 left-2.5 sm:left-4 right-2.5 sm:right-4 flex flex-wrap items-center justify-between gap-1.5 sm:gap-2">
           {/* Left Water Metric Badge */}
-          <div className="flex items-center gap-2 rounded-xl bg-[#07101E]/90 px-3.5 py-1.5 backdrop-blur-md border border-white/10 shadow-lg">
-            <span className="h-2 w-2 rounded-full bg-cyan-400 animate-pulse" />
-            <span className="text-xs text-slate-300">Water pixels:</span>
-            <span className="font-mono text-sm font-bold text-cyan-400">
+          <div className="flex items-center gap-1.5 sm:gap-2 rounded-lg sm:rounded-xl bg-[#07101E]/90 px-2.5 sm:px-3.5 py-1 sm:py-1.5 backdrop-blur-md border border-white/10 shadow-lg">
+            <span className="h-1.5 sm:h-2 w-1.5 sm:w-2 rounded-full bg-cyan-400 animate-pulse" />
+            <span className="text-[10px] sm:text-xs text-slate-300">Water pixels:</span>
+            <span className="font-mono text-xs sm:text-sm font-bold text-cyan-400">
               26.6%
             </span>
           </div>
 
           {/* Right Accuracy Badges */}
-          <div className="flex items-center gap-2 font-mono text-[11px]">
-            <div className="rounded-xl bg-[#07101E]/90 px-2.5 py-1.5 backdrop-blur-md border border-white/10 text-slate-300 shadow-lg">
-              Test IoU: <span className="text-cyan-400 font-bold">0.792</span>
+          <div className="flex items-center gap-1 sm:gap-2 font-mono text-[10px] sm:text-[11px]">
+            <div className="rounded-lg sm:rounded-xl bg-[#07101E]/90 px-2 sm:px-2.5 py-1 sm:py-1.5 backdrop-blur-md border border-white/10 text-slate-300 shadow-lg">
+              IoU: <span className="text-cyan-400 font-bold">0.792</span>
             </div>
-            <div className="rounded-xl bg-[#07101E]/90 px-2.5 py-1.5 backdrop-blur-md border border-white/10 text-slate-300 shadow-lg">
-              Test Dice: <span className="text-emerald-400 font-bold">0.884</span>
+            <div className="rounded-lg sm:rounded-xl bg-[#07101E]/90 px-2 sm:px-2.5 py-1 sm:py-1.5 backdrop-blur-md border border-white/10 text-slate-300 shadow-lg">
+              Dice: <span className="text-emerald-400 font-bold">0.884</span>
             </div>
             <div className="hidden sm:flex rounded-xl bg-[#07101E]/90 px-2.5 py-1.5 backdrop-blur-md border border-white/10 text-slate-300 shadow-lg">
               Latency: <span className="text-cyan-400 font-bold">31ms ONNX</span>

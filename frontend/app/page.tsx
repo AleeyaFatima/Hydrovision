@@ -67,17 +67,18 @@ function SampleStrip() {
 
   return (
     <div className="space-y-3">
-      <p className="text-label text-center">
-        Hover to see HydroVision&apos;s prediction on images it never saw during training
+      <p className="text-label text-center px-4">
+        Hover or tap to see HydroVision&apos;s prediction on unseen test images
       </p>
-      <div className="flex gap-3 overflow-x-auto pb-2 snap-x">
+      <div className="flex gap-3 overflow-x-auto pb-2 px-4 sm:px-0 -mx-4 sm:mx-0 snap-x scrollbar-thin">
         {SAMPLES.map((s) => (
           <div
             key={s.id}
             className="relative flex-shrink-0 snap-start rounded-xl overflow-hidden cursor-pointer"
-            style={{ width: 180, height: 120, border: "1px solid var(--border)" }}
+            style={{ width: 175, height: 115, border: "1px solid var(--border)" }}
             onMouseEnter={() => setHovered(s.id)}
             onMouseLeave={() => setHovered(null)}
+            onTouchStart={() => setHovered(hovered === s.id ? null : s.id)}
             onFocus={() => setHovered(s.id)}
             onBlur={() => setHovered(null)}
             tabIndex={0}
@@ -138,15 +139,15 @@ function MetricCard({
     : count.toFixed(3);
 
   return (
-    <div className="space-y-1 text-center">
+    <div className="space-y-0.5 sm:space-y-1 text-center">
       <div
-        className="font-mono font-semibold tabular-nums"
-        style={{ color: "var(--water)", fontSize: "clamp(28px,3.5vw,44px)" }}
+        className="font-mono font-bold tabular-nums"
+        style={{ color: "var(--water)", fontSize: "clamp(24px, 3.5vw, 44px)" }}
       >
         {formatted}
       </div>
-      <div className="text-sm font-medium" style={{ color: "var(--text)" }}>{label}</div>
-      <div className="text-xs" style={{ color: "var(--text-muted)" }}>{caption}</div>
+      <div className="text-xs sm:text-sm font-semibold truncate text-white">{label}</div>
+      <div className="text-[10px] sm:text-xs text-slate-400 truncate">{caption}</div>
     </div>
   );
 }
@@ -283,11 +284,10 @@ export default function LandingPage() {
                 </a>
               </div>
 
-              {/* Proof Row */}
+              {/* Proof Row - Mobile Responsive */}
               <div
                 ref={metricsRef}
-                className="grid grid-cols-3 gap-4 pt-4"
-                style={{ borderTop: "1px solid var(--border)" }}
+                className="grid grid-cols-3 gap-2 sm:gap-4 pt-4 border-t border-white/10"
               >
                 <MetricCard label="Test Dice" value={0.884} caption="44 held-out test images" started={metricsStarted} />
                 <MetricCard label="Test IoU" value={0.792} caption="44 held-out test images" started={metricsStarted} />

@@ -82,8 +82,13 @@ export function ArchitectureDiagram() {
         </div>
       </div>
 
+      {/* Mobile Swipe Hint */}
+      <div className="md:hidden mt-3 flex items-center justify-center gap-1.5 text-[11px] font-mono text-cyan-400 bg-cyan-500/10 py-1.5 px-3 rounded-lg border border-cyan-500/20">
+        <span>← Swipe horizontally to inspect U-Net pipeline →</span>
+      </div>
+
       {/* SVG Canvas Container matching Reference Image 2 */}
-      <div className="mt-5 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-thin">
+      <div className="mt-4 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-thin">
         <svg
           viewBox="0 0 1020 540"
           className="w-[1020px] max-w-full h-auto select-none font-sans"
