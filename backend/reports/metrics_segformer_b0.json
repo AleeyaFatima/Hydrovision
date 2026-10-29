@@ -1,0 +1,24 @@
+{
+  "model_name": "segformer_b0",
+  "device": "mps",
+  "threshold": 0.45,
+  "metrics": {
+    "iou": 0.7932331185035753,
+    "dice": 0.8846960390353615,
+    "precision": 0.8773041917962568,
+    "recall": 0.8922135067601445,
+    "accuracy": 0.9021037708628948
+  },
+  "confusion_matrix": {
+    "tp": 1082975,
+    "fp": 151460,
+    "fn": 130832,
+    "tn": 1518317
+  },
+  "latency_ms": {
+    "mean": 73.07088622738692,
+    "p95": 21.70879999830504
+  },
+  "checkpoint": "best_segformer_b0.pth",
+  "timestamp": "2026-10-29 17:59:35"
+}

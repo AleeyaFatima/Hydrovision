@@ -9,12 +9,6 @@ IMAGENET_STD = (0.229, 0.224, 0.225)
 
 
 def get_train_transforms(img_size: int = 256) -> A.Compose:
-    """Joint augmentations applied during model training.
-    
-    Includes spatial transformations (flips, rotations, affine) and
-    photometric transformations (brightness, contrast, hue/saturation)
-    to prevent overfitting on aerial flood imagery.
-    """
     return A.Compose([
         A.Resize(img_size, img_size, interpolation=cv2.INTER_LINEAR),
         A.HorizontalFlip(p=0.5),
@@ -40,7 +34,7 @@ def get_train_transforms(img_size: int = 256) -> A.Compose:
         ),
         A.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
         ToTensorV2(),
-    ])
+    ], is_check_shapes=False)
 
 
 def get_val_transforms(img_size: int = 256) -> A.Compose:
@@ -49,7 +43,7 @@ def get_val_transforms(img_size: int = 256) -> A.Compose:
         A.Resize(img_size, img_size, interpolation=cv2.INTER_LINEAR),
         A.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
         ToTensorV2(),
-    ])
+    ], is_check_shapes=False)
 
 
 def get_inference_transforms(img_size: int = 256) -> A.Compose:
@@ -58,4 +52,4 @@ def get_inference_transforms(img_size: int = 256) -> A.Compose:
         A.Resize(img_size, img_size, interpolation=cv2.INTER_LINEAR),
         A.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
         ToTensorV2(),
-    ])
+    ], is_check_shapes=False)

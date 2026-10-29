@@ -1,0 +1,20 @@
+{
+  "model_name": "unet_mobilenetv2",
+  "img_size": 256,
+  "runs": 30,
+  "pytorch_cpu_ms": {
+    "mean": 79.82657089936158,
+    "std": 1.337669176425547,
+    "min": 75.65245799196418,
+    "max": 84.49875000223983
+  },
+  "onnxruntime_cpu_ms": {
+    "mean": 30.956502800593928,
+    "std": 0.8009339931489063,
+    "min": 29.554583990829997,
+    "max": 32.70216699456796
+  },
+  "speedup_factor": 2.578668895952615,
+  "max_abs_diff": 1.4066696166992188e-05,
+  "onnx_model_path": "unet_mobilenetv2.onnx"
+}

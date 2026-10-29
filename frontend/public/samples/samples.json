@@ -1,0 +1,62 @@
+[
+  {
+    "id": "sample_1",
+    "filename": "sample_1.jpg",
+    "url": "/samples/sample_1.jpg",
+    "water_percentage": 71.94,
+    "mean_uncertainty": 0.0295,
+    "width": 340,
+    "height": 221,
+    "source_path": "data/Image/2040.jpg"
+  },
+  {
+    "id": "sample_2",
+    "filename": "sample_2.jpg",
+    "url": "/samples/sample_2.jpg",
+    "water_percentage": 9.93,
+    "mean_uncertainty": 0.0135,
+    "width": 1024,
+    "height": 682,
+    "source_path": "data/Image/1079.jpg"
+  },
+  {
+    "id": "sample_3",
+    "filename": "sample_3.jpg",
+    "url": "/samples/sample_3.jpg",
+    "water_percentage": 20.51,
+    "mean_uncertainty": 0.0221,
+    "width": 759,
+    "height": 422,
+    "source_path": "data/Image/24.jpg"
+  },
+  {
+    "id": "sample_4",
+    "filename": "sample_4.jpg",
+    "url": "/samples/sample_4.jpg",
+    "water_percentage": 20.47,
+    "mean_uncertainty": 0.0205,
+    "width": 660,
+    "height": 440,
+    "source_path": "data/Image/1061.jpg"
+  },
+  {
+    "id": "sample_5",
+    "filename": "sample_5.jpg",
+    "url": "/samples/sample_5.jpg",
+    "water_percentage": 24.69,
+    "mean_uncertainty": 0.011,
+    "width": 693,
+    "height": 390,
+    "source_path": "data/Image/26.jpg"
+  },
+  {
+    "id": "sample_6",
+    "filename": "sample_6.jpg",
+    "url": "/samples/sample_6.jpg",
+    "water_percentage": 55.02,
+    "mean_uncertainty": 0.0353,
+    "width": 858,
+    "height": 536,
+    "source_path": "data/Image/1054.jpg"
+  }
+]

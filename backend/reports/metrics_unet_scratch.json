@@ -1,0 +1,24 @@
+{
+  "model_name": "unet_scratch",
+  "device": "mps",
+  "threshold": 0.4,
+  "metrics": {
+    "iou": 0.7252118516133126,
+    "dice": 0.8407220839981281,
+    "precision": 0.8505488668555368,
+    "recall": 0.8311197743957788,
+    "accuracy": 0.8674396168101617
+  },
+  "confusion_matrix": {
+    "tp": 1008819,
+    "fp": 177261,
+    "fn": 204988,
+    "tn": 1492516
+  },
+  "latency_ms": {
+    "mean": 84.89531727305307,
+    "p95": 18.138896394520998
+  },
+  "checkpoint": "best_unet_scratch.pth",
+  "timestamp": "2026-10-29 17:59:09"
+}

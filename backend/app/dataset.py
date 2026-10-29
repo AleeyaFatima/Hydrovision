@@ -48,6 +48,12 @@ class FloodDataset(Dataset):
             mask_raw = np.array(mask_f.convert("L"))
             mask = (mask_raw > 127).astype(np.float32)
 
+        # Ensure image and mask have matching spatial dimensions
+        if image.shape[:2] != mask.shape[:2]:
+            h, w = image.shape[:2]
+            mask_pil = Image.fromarray((mask * 255).astype(np.uint8))
+            mask = (np.array(mask_pil.resize((w, h), Image.NEAREST)) > 127).astype(np.float32)
+
         if self.transform is not None:
             augmented = self.transform(image=image, mask=mask)
             image_tensor = augmented["image"]

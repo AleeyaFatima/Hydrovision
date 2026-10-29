@@ -1,0 +1,24 @@
+{
+  "model_name": "unet_mobilenetv2",
+  "device": "mps",
+  "threshold": 0.45,
+  "metrics": {
+    "iou": 0.792165317387388,
+    "dice": 0.8840315228755787,
+    "precision": 0.8868844126521728,
+    "recall": 0.8811969283419949,
+    "accuracy": 0.9026822176846278
+  },
+  "confusion_matrix": {
+    "tp": 1069603,
+    "fp": 136420,
+    "fn": 144204,
+    "tn": 1533357
+  },
+  "latency_ms": {
+    "mean": 85.06784752204443,
+    "p95": 18.414033050794387
+  },
+  "checkpoint": "best_unet_mobilenetv2.pth",
+  "timestamp": "2026-10-29 17:58:41"
+}

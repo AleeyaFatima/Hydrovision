@@ -53,7 +53,12 @@ def create_uncertainty_heatmap(std_map: np.ndarray) -> np.ndarray:
     # Normalize std_map (theoretical max std for Bernoulli is 0.5)
     norm_std = np.clip(std_map / 0.5, 0.0, 1.0)
     # Using 'inferno' or 'magma' or custom amber colormap
-    colormap = cm.get_cmap("inferno")
+    try:
+        from matplotlib import colormaps
+        colormap = colormaps["inferno"]
+    except Exception:
+        import matplotlib.pyplot as plt
+        colormap = plt.get_cmap("inferno")
     heatmap_rgba = colormap(norm_std)
     heatmap_rgb = (heatmap_rgba[:, :, :3] * 255.0).astype(np.uint8)
     return heatmap_rgb

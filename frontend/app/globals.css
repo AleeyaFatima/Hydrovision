@@ -1,0 +1,74 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-color: #050B18;
+  --surface-color: #0B1626;
+  --accent-cyan: #22D3EE;
+  --accent-blue: #2563EB;
+  --accent-coral: #FB7185;
+  --accent-emerald: #34D399;
+}
+
+body {
+  background-color: #050B18;
+  color: #F8FAFC;
+  font-family: var(--font-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* Radar grid background texture */
+.bg-grid-pattern {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.bg-radial-glow {
+  background: radial-gradient(circle at 50% 20%, rgba(34, 211, 238, 0.08) 0%, transparent 65%);
+}
+
+/* Glassmorphism panel */
+.glass-panel {
+  background: rgba(11, 22, 38, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-hover {
+  transition: all 0.25s ease-in-out;
+}
+.glass-panel-hover:hover {
+  border-color: rgba(34, 211, 238, 0.4);
+  box-shadow: 0 0 25px -5px rgba(34, 211, 238, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Custom sleek scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #050B18;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #22D3EE;
+}
+
+/* Monospace badge */
+.mono-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  letter-spacing: -0.02em;
+}
