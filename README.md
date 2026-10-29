@@ -6,6 +6,7 @@
 [![Next.js 14](https://img.shields.io/badge/Next.js-14.2-000000?logo=nextdotjs)](https://nextjs.org)
 [![ONNX Runtime](https://img.shields.io/badge/ONNX_Runtime-30.9ms_CPU-005CED?logo=onnx)](https://onnxruntime.ai)
 [![Test Dice](https://img.shields.io/badge/Test_Dice-0.8840-34D399)](#-scientific-3-model-benchmark)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAleeyaFatima%2Faquamap&root-directory=frontend)
 
 AquaMap v2 is a scientific aerial floodwater segmentation system engineered for real-time disaster response, drone reconnaissance, and academic thesis defense. 
 
