@@ -325,42 +325,20 @@ export function EarthGlobe() {
   }
 
   return (
-    <div className="relative flex flex-col items-center">
+    <div className="relative flex flex-col items-center justify-center">
+      {/* Ambient background glow behind globe */}
+      <div className="absolute inset-0 -m-8 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+
       {/* 3D Canvas Container */}
       <div
         ref={containerRef}
-        className="relative h-[380px] w-[380px] sm:h-[430px] sm:w-[430px] cursor-grab active:cursor-grabbing select-none"
+        className="relative h-[380px] w-[380px] sm:h-[440px] sm:w-[440px] cursor-grab active:cursor-grabbing select-none"
       />
 
-      {/* Interactive Hotspot Pills below or floating */}
-      <div className="mt-2 flex flex-wrap justify-center gap-2 max-w-md">
-        {HOTSPOTS.map((spot) => {
-          const isSelected = activeSpot.name === spot.name;
-          return (
-            <button
-              key={spot.name}
-              onClick={() => setActiveSpot(spot)}
-              className={`rounded-full px-3 py-1 text-[11px] font-medium transition-all ${
-                isSelected
-                  ? "bg-accent-cyan/20 text-accent-cyan border border-accent-cyan/40 shadow-sm"
-                  : "bg-surface border border-white/5 text-slate-400 hover:text-white hover:border-white/20"
-              }`}
-            >
-              {spot.name.split(" ")[0]} ({spot.year})
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Selected Hotspot Card */}
-      <div className="mt-3 w-full max-w-sm rounded-xl border border-white/10 bg-surface/80 p-3 backdrop-blur-md">
-        <div className="flex items-center justify-between">
-          <span className="font-semibold text-xs text-white">{activeSpot.name}</span>
-          <span className="rounded bg-accent-coral/20 px-2 py-0.5 font-mono text-[10px] font-semibold text-accent-coral border border-accent-coral/30">
-            {activeSpot.waterFraction}
-          </span>
-        </div>
-        <p className="mt-1 text-[11px] text-slate-400">{activeSpot.location} • {activeSpot.impact}</p>
+      {/* Clean Telemetry Tag underneath */}
+      <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#07101E]/80 px-3.5 py-1 text-[11px] font-mono text-slate-400 backdrop-blur-md">
+        <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse" />
+        <span>Global Optical & Drone Telemetry • Drag to Rotate</span>
       </div>
     </div>
   );
