@@ -16,27 +16,25 @@ const ThemeContext = createContext<ThemeContextType>({
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("dark");
-  const [mounted, setMounted] = useState<boolean>(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("aquamap-theme") as Theme | null;
-    if (saved && (saved === "dark" || saved === "light")) {
-      setTheme(saved);
-      document.documentElement.classList.remove("dark", "light");
-      document.documentElement.classList.add(saved);
-    } else {
-      document.documentElement.classList.add("dark");
-    }
+    const saved = localStorage.getItem("hydrovision-theme") as Theme | null;
+    const initial: Theme = saved === "light" ? "light" : "dark";
+    setTheme(initial);
+    document.documentElement.setAttribute("data-theme", initial);
     setMounted(true);
   }, []);
 
   const toggleTheme = () => {
-    const nextTheme = theme === "dark" ? "light" : "dark";
-    setTheme(nextTheme);
-    localStorage.setItem("aquamap-theme", nextTheme);
-    document.documentElement.classList.remove("dark", "light");
-    document.documentElement.classList.add(nextTheme);
+    const next: Theme = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("hydrovision-theme", next);
+    document.documentElement.setAttribute("data-theme", next);
   };
+
+  // Avoid flash of wrong theme
+  if (!mounted) return null;
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>

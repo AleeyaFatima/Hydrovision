@@ -4,16 +4,13 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   UploadCloud,
   Layers,
-  ShieldAlert,
   Eye,
   Download,
   FileText,
   Sliders,
-  CheckCircle2,
   RefreshCw,
-  Cpu,
-  Zap,
-  Info,
+  AlertTriangle,
+  X,
 } from "lucide-react";
 import {
   predictImage,
@@ -25,46 +22,51 @@ import {
 
 type ActiveLayer = "overlay" | "mask" | "uncertainty" | "gradcam";
 
+const LAYER_LABELS: Record<ActiveLayer, string> = {
+  overlay: "Flood overlay",
+  mask: "Water mask",
+  uncertainty: "Uncertainty",
+  gradcam: "Grad-CAM",
+};
+
 export default function AnalyzePage() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [samples, setSamples] = useState<SampleItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [reportLoading, setReportLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState(false);
+  const [reportLoading, setReportLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<PredictResponse | null>(null);
 
-  // Settings
-  const [explain, setExplain] = useState<boolean>(true);
-  const [uncertainty, setUncertainty] = useState<boolean>(true);
-  const [useOnnx, setUseOnnx] = useState<boolean>(false);
+  const [explain, setExplain] = useState(true);
+  const [uncertainty, setUncertainty] = useState(true);
+  const [useOnnx, setUseOnnx] = useState(false);
 
-  // Display state
   const [activeLayer, setActiveLayer] = useState<ActiveLayer>("overlay");
-  const [opacity, setOpacity] = useState<number>(0.8);
-  const [sliderPos, setSliderPos] = useState<number>(50); // for before/after comparison slider
+  const [opacity, setOpacity] = useState(0.8);
+  const [sliderPos, setSliderPos] = useState(50);
   const containerRef = useRef<HTMLDivElement>(null);
+  const dragging = useRef(false);
 
-  // Load sample images on mount
+  // Load samples & auto-load first on mount
   useEffect(() => {
     async function loadSamples() {
       const data = await fetchSamples();
       setSamples(data);
-      // Auto-load sample 1 if available
       if (data.length > 0) {
-        selectSample(data[0]);
+        doSelectSample(data[0]);
       }
     }
     loadSamples();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const selectSample = async (sample: SampleItem) => {
+  const doSelectSample = async (sample: SampleItem) => {
     try {
       setLoading(true);
       setError(null);
       setPreviewUrl(sample.url);
 
-      // Instant offline display if pre-computed prediction exists
       if (sample.prediction) {
         setResult(sample.prediction);
         setLoading(false);
@@ -73,39 +75,35 @@ export default function AnalyzePage() {
 
       const res = await fetch(sample.url);
       const blob = await res.blob();
-      const sampleFile = new File([blob], sample.name, { type: "image/jpeg" });
+      const sampleFile = new File([blob], sample.filename || "sample.jpg", { type: "image/jpeg" });
       setFile(sampleFile);
-
-      // Run initial inference on selected sample
-      const pred = await predictImage(sampleFile, sample.name, explain, uncertainty, useOnnx);
+      const pred = await predictImage(sampleFile, sampleFile.name, explain, uncertainty, useOnnx);
       setResult(pred);
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Failed to analyze sample");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to analyze sample";
+      setError(msg);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFileUpload = (uploadedFile: File) => {
-    setFile(uploadedFile);
-    const url = URL.createObjectURL(uploadedFile);
-    setPreviewUrl(url);
-    runInference(uploadedFile);
+  const handleFileUpload = (f: File) => {
+    setFile(f);
+    setPreviewUrl(URL.createObjectURL(f));
+    runInference(f);
   };
 
   const runInference = async (targetFile?: File) => {
     const f = targetFile || file;
     if (!f) return;
-
     try {
       setLoading(true);
       setError(null);
       const pred = await predictImage(f, f.name, explain, uncertainty, useOnnx);
       setResult(pred);
-    } catch (err: any) {
-      console.error(err);
-      setError(err.message || "Inference failed");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Inference failed";
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -115,18 +113,16 @@ export default function AnalyzePage() {
     if (!file) return;
     try {
       setReportLoading(true);
-      const pdfBlob = await downloadReport(file, file.name, explain, uncertainty);
-      const url = window.URL.createObjectURL(pdfBlob);
+      const blob = await downloadReport(file, file.name, explain, uncertainty);
+      const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `aquamap_report_${Date.now()}.pdf`;
-      document.body.appendChild(a);
+      a.download = `hydrovision_report_${Date.now()}.pdf`;
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (err: any) {
-      console.error(err);
-      alert("Failed to download PDF report: " + err.message);
+      URL.revokeObjectURL(url);
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Report failed";
+      alert("Failed to download PDF report: " + msg);
     } finally {
       setReportLoading(false);
     }
@@ -136,78 +132,91 @@ export default function AnalyzePage() {
     if (!result) return;
     const a = document.createElement("a");
     a.href = `data:image/png;base64,${result.overlay_png_base64}`;
-    a.download = `aquamap_overlay_${Date.now()}.png`;
-    document.body.appendChild(a);
+    a.download = `hydrovision_overlay_${Date.now()}.png`;
     a.click();
-    document.body.removeChild(a);
   };
 
-  const handleSliderMove = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+  const updateSlider = (clientX: number) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
-    const clientX = "touches" in e ? e.touches[0].clientX : e.clientX;
-    const x = clientX - rect.left;
-    const pct = Math.max(0, Math.min(100, (x / rect.width) * 100));
-    setSliderPos(Math.round(pct));
+    const pct = Math.round(Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100)));
+    setSliderPos(pct);
   };
 
-  // Determine current active image source
+  const handleKeySlider = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowLeft") setSliderPos((p) => Math.max(0, p - 5));
+    if (e.key === "ArrowRight") setSliderPos((p) => Math.min(100, p + 5));
+  };
+
   const getActiveLayerSrc = () => {
     if (!result) return null;
-    if (activeLayer === "mask") {
-      return `data:image/png;base64,${result.mask_png_base64}`;
-    }
-    if (activeLayer === "uncertainty" && result.uncertainty_png_base64) {
+    if (activeLayer === "mask") return `data:image/png;base64,${result.mask_png_base64}`;
+    if (activeLayer === "uncertainty" && result.uncertainty_png_base64)
       return `data:image/png;base64,${result.uncertainty_png_base64}`;
-    }
-    if (activeLayer === "gradcam" && result.gradcam_png_base64) {
+    if (activeLayer === "gradcam" && result.gradcam_png_base64)
       return `data:image/png;base64,${result.gradcam_png_base64}`;
-    }
     return `data:image/png;base64,${result.overlay_png_base64}`;
   };
 
-  const getRiskColor = (pct: number) => {
-    if (pct > 40) return "text-accent-coral";
-    if (pct > 15) return "text-accent-amber";
-    return "text-accent-emerald";
+  const getRiskStyle = (pct: number) => {
+    if (pct > 40) return { color: "var(--alert)" };
+    if (pct > 15) return { color: "var(--uncertain)" };
+    return { color: "var(--ok)" };
   };
 
   const getRiskLabel = (pct: number) => {
-    if (pct > 40) return "Severe Inundation";
-    if (pct > 15) return "Moderate Flooding";
-    return "Localized Water";
+    if (pct > 40) return "High water coverage";
+    if (pct > 15) return "Moderate water coverage";
+    return "Low water coverage";
   };
 
+  const highUncertainty = result?.mean_uncertainty && result.mean_uncertainty > 0.2;
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+    <div className="container-workspace py-8 space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
+      <div
+        className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6"
+        style={{ borderBottom: "1px solid var(--border)" }}
+      >
         <div>
-          <div className="flex items-center gap-2">
-            <span className="rounded bg-accent-cyan/15 px-2 py-0.5 font-mono text-xs font-semibold text-accent-cyan border border-accent-cyan/30">
-              LIVE INFERENCE WORKSPACE
-            </span>
-            <span className="text-xs text-slate-400">Model: U-Net MobileNetV2 (Dice 0.884)</span>
-          </div>
-          <h1 className="mt-2 text-2xl sm:text-3xl font-bold text-white">
-            Aerial Drone Segmentation & Forensics
+          <span
+            className="inline-block rounded px-2 py-0.5 text-xs font-semibold mb-2"
+            style={{ background: "rgba(34,211,238,0.1)", color: "var(--water)", border: "1px solid rgba(34,211,238,0.25)" }}
+          >
+            Inference workspace
+          </span>
+          <h1 className="text-h2" style={{ color: "var(--text)" }}>
+            Analyze an aerial image
           </h1>
+          <p className="text-small mt-1" style={{ color: "var(--text-2)" }}>
+            Model: U-Net MobileNetV2 · Test Dice 0.884 · 44 held-out test images
+          </p>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex items-center gap-3">
           <button
             onClick={handleDownloadReport}
             disabled={!result || reportLoading}
-            className="flex items-center gap-2 rounded-xl bg-purple-600/20 border border-purple-500/40 px-4 py-2 text-xs font-semibold text-purple-300 hover:bg-purple-600/30 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all disabled:opacity-50"
+            style={{
+              border: "1px solid var(--border)",
+              background: "var(--surface-1)",
+              color: "var(--text-2)",
+            }}
           >
             <FileText className="h-4 w-4" />
-            <span>{reportLoading ? "Compiling PDF..." : "Export PDF Dossier"}</span>
+            <span>{reportLoading ? "Generating…" : "Download PDF report"}</span>
           </button>
           <button
             onClick={handleDownloadOverlay}
             disabled={!result}
-            className="flex items-center gap-2 rounded-xl bg-accent-cyan/15 border border-accent-cyan/30 px-4 py-2 text-xs font-semibold text-accent-cyan hover:bg-accent-cyan/25 transition-all disabled:opacity-50"
+            className="flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition-all disabled:opacity-50"
+            style={{
+              border: "1px solid rgba(34,211,238,0.3)",
+              background: "rgba(34,211,238,0.08)",
+              color: "var(--water)",
+            }}
           >
             <Download className="h-4 w-4" />
             <span>Download PNG</span>
@@ -215,67 +224,101 @@ export default function AnalyzePage() {
         </div>
       </div>
 
-      {/* Main Workspace Grid */}
+      {/* High uncertainty banner */}
+      {highUncertainty && (
+        <div
+          className="flex items-start gap-3 rounded-xl px-4 py-3 text-sm"
+          style={{
+            background: "rgba(251,191,36,0.1)",
+            border: "1px solid rgba(251,191,36,0.3)",
+            color: "var(--uncertain)",
+          }}
+        >
+          <AlertTriangle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+          <p>
+            <strong>High uncertainty detected</strong> — mean uncertainty {result?.mean_uncertainty?.toFixed(3)}.
+            The model is less confident on this image; predictions at edges or shadowed regions may be less reliable.
+          </p>
+        </div>
+      )}
+
+      {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Column: Upload, Settings & Test Samples (5 cols) */}
-        <div className="lg:col-span-5 space-y-6">
-          {/* Drag & Drop Upload Zone */}
+        {/* Left: Upload + Samples + Options */}
+        <div className="lg:col-span-5 space-y-5">
+          {/* Upload Zone */}
           <div
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault();
-              if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                handleFileUpload(e.dataTransfer.files[0]);
-              }
+              if (e.dataTransfer.files?.[0]) handleFileUpload(e.dataTransfer.files[0]);
             }}
-            className="relative flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-white/20 bg-surface/60 p-8 text-center transition-all hover:border-accent-cyan/60 hover:bg-surface-elevated/40"
+            className="relative flex flex-col items-center justify-center rounded-xl text-center transition-all cursor-pointer"
+            style={{
+              border: "2px dashed var(--border-strong)",
+              background: "var(--surface-1)",
+              padding: "2rem 1rem",
+              minHeight: 130,
+            }}
           >
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"
-              onChange={(e) => {
-                if (e.target.files && e.target.files[0]) {
-                  handleFileUpload(e.target.files[0]);
-                }
-              }}
+              onChange={(e) => { if (e.target.files?.[0]) handleFileUpload(e.target.files[0]); }}
               className="absolute inset-0 cursor-pointer opacity-0"
+              aria-label="Upload aerial image"
             />
-            <div className="h-12 w-12 rounded-xl bg-accent-cyan/10 border border-accent-cyan/30 flex items-center justify-center text-accent-cyan mb-3">
-              <UploadCloud className="h-6 w-6" />
+            <div
+              className="flex h-11 w-11 items-center justify-center rounded-xl mb-3"
+              style={{ background: "rgba(34,211,238,0.1)", border: "1px solid rgba(34,211,238,0.3)", color: "var(--water)" }}
+            >
+              <UploadCloud className="h-5 w-5" />
             </div>
-            <p className="text-sm font-semibold text-white">Drop drone imagery here</p>
-            <p className="mt-1 text-xs text-slate-400">
-              Supports JPEG, PNG up to 25MB • Automatically scaled for neural inference
+            <p className="text-sm font-semibold" style={{ color: "var(--text)" }}>
+              Drop drone or aerial imagery here
+            </p>
+            <p className="mt-1 text-small" style={{ color: "var(--text-muted)" }}>
+              JPEG or PNG · up to 10 MB
             </p>
           </div>
 
-          {/* Test Set Sample Picker */}
-          <div className="rounded-2xl border border-white/10 bg-surface/80 p-5 backdrop-blur-md space-y-3">
+          {/* Test Sample Grid */}
+          <div
+            className="rounded-xl p-4 space-y-3"
+            style={{ border: "1px solid var(--border)", background: "var(--surface-1)" }}
+          >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-semibold text-slate-300">
-                OR SELECT UNSEEN TEST SAMPLE ({samples.length})
+              <span className="text-label">Or pick a test sample</span>
+              <span className="text-xs font-medium" style={{ color: "var(--water)" }}>
+                {samples.length} available
               </span>
-              <span className="text-[10px] text-accent-cyan font-mono">Real Kaggle Split</span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {samples.map((s, idx) => (
                 <button
-                  key={s.id || idx}
-                  onClick={() => selectSample(s)}
-                  className={`group relative overflow-hidden rounded-lg border text-left transition-all ${
-                    previewUrl === s.url
-                      ? "border-accent-cyan shadow-cyan-glow"
-                      : "border-white/10 hover:border-white/30"
-                  }`}
+                  key={s.id ?? idx}
+                  onClick={() => doSelectSample(s)}
+                  className="group relative overflow-hidden rounded-lg transition-all"
+                  style={{
+                    border: `1px solid ${previewUrl === s.url ? "var(--water)" : "var(--border)"}`,
+                    boxShadow: previewUrl === s.url ? "var(--glow)" : "none",
+                  }}
+                  aria-label={`Load sample ${idx + 1}: ${s.water_percentage}% water`}
                 >
                   <img
                     src={s.url}
-                    alt={s.name}
-                    className="h-16 w-full object-cover group-hover:scale-105 transition-transform"
+                    alt={`Test sample ${idx + 1}`}
+                    className="h-16 w-full object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-1.5">
-                    <span className="font-mono text-[9px] text-slate-200 truncate">
-                      {s.water_percentage ? `${s.water_percentage}%` : s.name}
+                  <div
+                    className="absolute bottom-0 left-0 right-0 px-1 py-1 text-center"
+                    style={{ background: "rgba(0,0,0,0.65)" }}
+                  >
+                    <span
+                      className="block font-mono text-xs"
+                      style={{ color: "var(--water)", fontSize: "11px" }}
+                    >
+                      {s.water_percentage ? `${s.water_percentage}%` : "—"}
                     </span>
                   </div>
                 </button>
@@ -283,249 +326,276 @@ export default function AnalyzePage() {
             </div>
           </div>
 
-          {/* Inference Settings */}
-          <div className="rounded-2xl border border-white/10 bg-surface/80 p-5 backdrop-blur-md space-y-4">
-            <span className="text-xs font-mono font-semibold text-slate-300 block">
-              DIAGNOSTIC TOGGLES
-            </span>
-
-            <div className="space-y-3">
-              <label className="flex items-center justify-between cursor-pointer">
+          {/* Options */}
+          <div
+            className="rounded-xl p-4 space-y-4"
+            style={{ border: "1px solid var(--border)", background: "var(--surface-1)" }}
+          >
+            <span className="text-label block">Options</span>
+            {[
+              {
+                label: "Grad-CAM explainability",
+                desc: "Backprop activation gradients from decoder",
+                val: explain,
+                set: setExplain,
+              },
+              {
+                label: "TTA uncertainty map",
+                desc: "4-pass test-time augmentation (slower)",
+                val: uncertainty,
+                set: setUncertainty,
+              },
+              {
+                label: "ONNX Runtime",
+                desc: "~31 ms vs ~80 ms PyTorch CPU",
+                val: useOnnx,
+                set: setUseOnnx,
+              },
+            ].map((item) => (
+              <label key={item.label} className="flex items-center justify-between cursor-pointer gap-3">
                 <div>
-                  <div className="text-xs font-medium text-white">Grad-CAM Spatial Explainability</div>
-                  <div className="text-[11px] text-slate-400">Backprop activation gradients from decoder</div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={explain}
-                  onChange={(e) => {
-                    setExplain(e.target.checked);
-                    if (file) runInference();
-                  }}
-                  className="rounded border-white/20 bg-surface-elevated text-accent-cyan focus:ring-accent-cyan"
-                />
-              </label>
-
-              <label className="flex items-center justify-between cursor-pointer">
-                <div>
-                  <div className="text-xs font-medium text-white">Test-Time Uncertainty (TTA)</div>
-                  <div className="text-[11px] text-slate-400">Standard deviation across 4 geometric flips</div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={uncertainty}
-                  onChange={(e) => {
-                    setUncertainty(e.target.checked);
-                    if (file) runInference();
-                  }}
-                  className="rounded border-white/20 bg-surface-elevated text-accent-cyan focus:ring-accent-cyan"
-                />
-              </label>
-
-              <label className="flex items-center justify-between cursor-pointer border-t border-white/5 pt-3">
-                <div>
-                  <div className="text-xs font-medium text-white flex items-center gap-1.5">
-                    <Zap className="h-3.5 w-3.5 text-accent-emerald" />
-                    <span>ONNX Runtime Engine</span>
+                  <div className="text-sm font-medium" style={{ color: "var(--text)" }}>
+                    {item.label}
                   </div>
-                  <div className="text-[11px] text-slate-400">30.9ms optimized CPU inference</div>
+                  <div className="text-xs" style={{ color: "var(--text-muted)" }}>
+                    {item.desc}
+                  </div>
                 </div>
                 <input
                   type="checkbox"
-                  checked={useOnnx}
-                  onChange={(e) => {
-                    setUseOnnx(e.target.checked);
-                    if (file) runInference();
-                  }}
-                  className="rounded border-white/20 bg-surface-elevated text-accent-cyan focus:ring-accent-cyan"
+                  checked={item.val}
+                  onChange={(e) => item.set(e.target.checked)}
+                  className="h-4 w-4 rounded"
+                  style={{ accentColor: "var(--water)" }}
                 />
               </label>
-            </div>
-          </div>
-        </div>
+            ))}
 
-        {/* Right Column: Interactive Diagnostic Viewer & Telemetry (7 cols) */}
-        <div className="lg:col-span-7 space-y-6">
-          {/* Main Visual Display Card */}
-          <div className="rounded-2xl border border-white/10 bg-surface/80 p-5 backdrop-blur-md space-y-4">
-            {/* Top Toolbar: Layer Selector & Opacity */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
-              <div className="flex flex-wrap gap-1.5">
-                {(
-                  [
-                    { id: "overlay", label: "Cyan Overlay" },
-                    { id: "mask", label: "Binary Mask" },
-                    { id: "uncertainty", label: "TTA Uncertainty" },
-                    { id: "gradcam", label: "Grad-CAM" },
-                  ] as const
-                ).map((tab) => (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveLayer(tab.id)}
-                    className={`rounded-lg px-3 py-1 text-xs font-medium transition-all ${
-                      activeLayer === tab.id
-                        ? "bg-accent-cyan text-black font-semibold shadow-cyan-glow"
-                        : "bg-surface-elevated text-slate-400 hover:text-white border border-white/5"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Opacity Slider */}
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-slate-400 font-mono">Opacity:</span>
-                <input
-                  type="range"
-                  min="0.1"
-                  max="1.0"
-                  step="0.05"
-                  value={opacity}
-                  onChange={(e) => setOpacity(parseFloat(e.target.value))}
-                  className="w-20 accent-accent-cyan"
-                />
-                <span className="text-[11px] font-mono text-white w-7">
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium" style={{ color: "var(--text)" }}>
+                  Overlay opacity
+                </span>
+                <span className="font-mono text-sm" style={{ color: "var(--water)" }}>
                   {Math.round(opacity * 100)}%
                 </span>
               </div>
+              <input
+                type="range"
+                min={0.2}
+                max={1}
+                step={0.05}
+                value={opacity}
+                onChange={(e) => setOpacity(Number(e.target.value))}
+                className="w-full"
+                style={{ accentColor: "var(--water)" }}
+                aria-label="Overlay opacity"
+              />
             </div>
 
-            {/* Offline Cache Indicator */}
-            {result?.is_demo_mode && (
-              <div className="flex items-center gap-2 rounded-xl bg-accent-blue/10 border border-accent-blue/30 px-3.5 py-2 text-xs text-accent-cyan font-mono">
-                <Info className="h-4 w-4 shrink-0" />
-                <span>Verified Test Split (Static Cache). To segment custom live imagery, start local FastAPI backend on port 8000.</span>
-              </div>
-            )}
-
-            {/* Interactive Image Frame */}
-            <div
-              ref={containerRef}
-              onMouseMove={handleSliderMove}
-              onTouchStart={handleSliderMove}
-              onTouchMove={handleSliderMove}
-              className="relative h-[360px] sm:h-[460px] w-full cursor-ew-resize select-none overflow-hidden rounded-xl border border-white/10 bg-black"
+            <button
+              onClick={() => runInference()}
+              disabled={!file || loading}
+              className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold transition-all disabled:opacity-50"
+              style={{ background: "var(--btn-primary-bg)", color: "var(--btn-primary-fg)" }}
             >
-              {loading && (
-                <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm space-y-3">
-                  <div className="h-8 w-8 rounded-full border-2 border-accent-cyan border-t-transparent animate-spin" />
-                  <span className="font-mono text-xs text-accent-cyan">
-                    Executing neural segmentation...
-                  </span>
-                </div>
-              )}
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              <span>{loading ? "Running U-Net…" : "Re-run inference"}</span>
+            </button>
+          </div>
+        </div>
 
-              {error && (
-                <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/85 p-6 text-center text-accent-coral text-xs">
-                  {error}
-                </div>
-              )}
-
-              {/* Base Raw Image */}
-              {previewUrl && (
-                <img
-                  src={previewUrl}
-                  alt="Raw Aerial Drone"
-                  className="absolute inset-0 h-full w-full object-contain"
-                />
-              )}
-
-              {/* Active Diagnostic Layer (Clipped by Before/After Slider) */}
-              {getActiveLayerSrc() && (
-                <div
-                  className="absolute inset-0 transition-none"
-                  style={{
-                    clipPath: `inset(0 ${100 - sliderPos}% 0 0)`,
-                    opacity: opacity,
-                  }}
-                >
-                  <img
-                    src={getActiveLayerSrc()!}
-                    alt="Active Layer"
-                    className="h-full w-full object-contain"
-                  />
-                </div>
-              )}
-
-              {/* Laser Wipe Divider Line */}
-              <div
-                className="pointer-events-none absolute bottom-0 top-0 w-0.5 bg-accent-cyan shadow-[0_0_12px_2px_rgba(34,211,238,0.7)]"
-                style={{ left: `${sliderPos}%` }}
+        {/* Right: Viewer */}
+        <div className="lg:col-span-7 space-y-5">
+          {/* Layer toggles */}
+          <div className="flex flex-wrap gap-2">
+            {(["overlay", "mask", "uncertainty", "gradcam"] as ActiveLayer[]).map((layer) => (
+              <button
+                key={layer}
+                onClick={() => setActiveLayer(layer)}
+                className="rounded-full px-4 py-1.5 text-sm font-medium transition-all"
+                style={{
+                  background: activeLayer === layer ? "rgba(34,211,238,0.15)" : "var(--surface-1)",
+                  color: activeLayer === layer ? "var(--water)" : "var(--text-2)",
+                  border: `1px solid ${activeLayer === layer ? "rgba(34,211,238,0.3)" : "var(--border)"}`,
+                }}
               >
-                <div className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full border-2 border-accent-cyan bg-surface/90 shadow-cyan-glow">
-                  <Sliders className="h-3.5 w-3.5 text-accent-cyan rotate-90" />
-                </div>
-              </div>
-
-              {/* Bottom Labels */}
-              <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg bg-black/80 px-2.5 py-1 text-[10px] font-mono text-slate-300 backdrop-blur-md border border-white/10">
-                ACTIVE: {activeLayer.toUpperCase()}
-              </div>
-              <div className="pointer-events-none absolute bottom-3 right-3 rounded-lg bg-black/80 px-2.5 py-1 text-[10px] font-mono text-slate-400 backdrop-blur-md border border-white/10">
-                RAW CAPTURE
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between text-[11px] text-slate-400 font-mono">
-              <span>← Wipe to compare raw image vs {activeLayer}</span>
-              <span className="text-accent-cyan">Divider: {sliderPos}%</span>
+                {LAYER_LABELS[layer]}
+              </button>
+            ))}
+            <div className="flex items-center gap-3 ml-auto text-xs" style={{ color: "var(--text-muted)" }}>
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-3 w-3 rounded-sm" style={{ background: "var(--water)" }} />
+                Water mask
+              </span>
+              <span className="flex items-center gap-1">
+                <span className="inline-block h-3 w-3 rounded-sm" style={{ background: "var(--uncertain)" }} />
+                Uncertain
+              </span>
             </div>
           </div>
 
-          {/* Telemetry Stat Cards */}
+          {/* Image viewer */}
+          <div
+            ref={containerRef}
+            className="relative rounded-xl overflow-hidden select-none"
+            style={{
+              aspectRatio: "16/9",
+              background: "var(--surface-2)",
+              border: "1px solid var(--border)",
+              cursor: "col-resize",
+            }}
+            onMouseDown={() => { dragging.current = true; }}
+            onMouseUp={() => { dragging.current = false; }}
+            onMouseLeave={() => { dragging.current = false; }}
+            onMouseMove={(e) => { if (dragging.current) updateSlider(e.clientX); }}
+            onTouchStart={() => { dragging.current = true; }}
+            onTouchEnd={() => { dragging.current = false; }}
+            onTouchMove={(e) => updateSlider(e.touches[0].clientX)}
+            onKeyDown={handleKeySlider}
+            tabIndex={0}
+            role="slider"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={sliderPos}
+            aria-label="Before/after comparison slider"
+          >
+            {/* Loading overlay */}
+            {loading && (
+              <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3"
+                style={{ background: "rgba(5,11,24,0.85)" }}>
+                <div
+                  className="absolute top-0 left-0 h-1 animate-pulse"
+                  style={{ width: "60%", background: "var(--water)", boxShadow: "var(--glow)" }}
+                />
+                <div
+                  className="h-10 w-10 rounded-full border-2 animate-spin"
+                  style={{ borderColor: "var(--water)", borderTopColor: "transparent" }}
+                />
+                <p className="text-sm font-medium" style={{ color: "var(--water)" }}>Running U-Net…</p>
+              </div>
+            )}
+
+            {/* Idle state */}
+            {!loading && !previewUrl && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3"
+                style={{ color: "var(--text-muted)" }}>
+                <Layers className="h-12 w-12 opacity-30" />
+                <p className="text-sm">Select a test sample or upload an image</p>
+              </div>
+            )}
+
+            {/* Base image */}
+            {previewUrl && (
+              <img
+                src={previewUrl}
+                alt="Input aerial image"
+                className="absolute inset-0 h-full w-full object-contain"
+              />
+            )}
+
+            {/* Active layer (clipped) */}
+            {getActiveLayerSrc() && (
+              <div
+                className="absolute inset-0"
+                style={{ clipPath: `inset(0 ${100 - sliderPos}% 0 0)`, opacity }}
+              >
+                <img
+                  src={getActiveLayerSrc()!}
+                  alt={`${LAYER_LABELS[activeLayer]} layer`}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            )}
+
+            {/* Divider */}
+            {previewUrl && (
+              <div
+                className="pointer-events-none absolute inset-y-0"
+                style={{ left: `${sliderPos}%`, width: 2, background: "var(--water)", boxShadow: "var(--glow)" }}
+              >
+                <div
+                  className="absolute top-1/2 -translate-x-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full"
+                  style={{ border: "2px solid var(--water)", background: "var(--surface-1)", boxShadow: "var(--glow)" }}
+                >
+                  <Sliders className="h-3.5 w-3.5 rotate-90" style={{ color: "var(--water)" }} />
+                </div>
+              </div>
+            )}
+
+            {/* Corner labels */}
+            {previewUrl && (
+              <>
+                <div className="pointer-events-none absolute bottom-3 left-3 rounded-lg px-2.5 py-1 text-xs font-medium backdrop-blur-md"
+                  style={{ background: "rgba(0,0,0,0.7)", color: "var(--text)" }}>
+                  {LAYER_LABELS[activeLayer]}
+                </div>
+                <div className="pointer-events-none absolute bottom-3 right-3 rounded-lg px-2.5 py-1 text-xs backdrop-blur-md"
+                  style={{ background: "rgba(0,0,0,0.7)", color: "var(--text-muted)" }}>
+                  Raw image
+                </div>
+              </>
+            )}
+          </div>
+
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            ← Drag or use arrow keys to compare raw vs {LAYER_LABELS[activeLayer]} · {sliderPos}% revealed
+          </p>
+
+          {/* Error state */}
+          {error && (
+            <div
+              className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm"
+              style={{ background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.3)", color: "var(--alert)" }}
+            >
+              <X className="h-5 w-5 flex-shrink-0" />
+              <div>
+                <p className="font-semibold">Analysis failed</p>
+                <p className="text-xs mt-0.5" style={{ color: "var(--text-2)" }}>{error}</p>
+              </div>
+              <button onClick={() => { setError(null); runInference(); }} className="ml-auto flex items-center gap-1 text-xs underline">
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Stat Cards */}
           {result && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {/* Stat 1: Water Percentage */}
-              <div className="rounded-xl border border-white/10 bg-surface/80 p-4 backdrop-blur-md space-y-1">
-                <span className="text-[10px] font-mono text-slate-400 block uppercase">
-                  Flood Inundation
-                </span>
-                <div className={`text-2xl font-mono font-bold ${getRiskColor(result.water_pixel_percentage)}`}>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-xl p-4 space-y-1" style={{ border: "1px solid var(--border)", background: "var(--surface-1)" }}>
+                <span className="text-label block">Water pixels</span>
+                <div className="text-2xl font-mono font-semibold tabular-nums" style={getRiskStyle(result.water_pixel_percentage)}>
                   {result.water_pixel_percentage}%
                 </div>
-                <span className="text-[10px] text-slate-400 block">
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
                   {getRiskLabel(result.water_pixel_percentage)}
                 </span>
               </div>
 
-              {/* Stat 2: Mean Uncertainty */}
-              <div className="rounded-xl border border-white/10 bg-surface/80 p-4 backdrop-blur-md space-y-1">
-                <span className="text-[10px] font-mono text-slate-400 block uppercase">
-                  TTA Uncertainty
-                </span>
-                <div className="text-2xl font-mono font-bold text-accent-amber">
+              <div className="rounded-xl p-4 space-y-1" style={{ border: "1px solid var(--border)", background: "var(--surface-1)" }}>
+                <span className="text-label block">TTA Uncertainty</span>
+                <div className="text-2xl font-mono font-semibold tabular-nums" style={{ color: highUncertainty ? "var(--uncertain)" : "var(--ok)" }}>
                   {result.mean_uncertainty !== null ? result.mean_uncertainty : "N/A"}
                 </div>
-                <span className="text-[10px] text-slate-400 block">
-                  Boundary Std Dev
-                </span>
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>Pixel std dev</span>
               </div>
 
-              {/* Stat 3: Latency */}
-              <div className="rounded-xl border border-white/10 bg-surface/80 p-4 backdrop-blur-md space-y-1">
-                <span className="text-[10px] font-mono text-slate-400 block uppercase">
-                  Inference Time
-                </span>
-                <div className="text-2xl font-mono font-bold text-accent-cyan">
+              <div className="rounded-xl p-4 space-y-1" style={{ border: "1px solid var(--border)", background: "var(--surface-1)" }}>
+                <span className="text-label block">Inference time</span>
+                <div className="text-2xl font-mono font-semibold tabular-nums" style={{ color: "var(--water)" }}>
                   {result.inference_ms} ms
                 </div>
-                <span className="text-[10px] text-slate-400 block font-mono">
-                  {useOnnx ? "ONNX Runtime" : "PyTorch MPS"}
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>
+                  {useOnnx ? "ONNX Runtime CPU" : "PyTorch CPU"}
                 </span>
               </div>
 
-              {/* Stat 4: Threshold */}
-              <div className="rounded-xl border border-white/10 bg-surface/80 p-4 backdrop-blur-md space-y-1">
-                <span className="text-[10px] font-mono text-slate-400 block uppercase">
-                  Sigmoid Cutoff
-                </span>
-                <div className="text-2xl font-mono font-bold text-white">
+              <div className="rounded-xl p-4 space-y-1" style={{ border: "1px solid var(--border)", background: "var(--surface-1)" }}>
+                <span className="text-label block">Sigmoid cutoff</span>
+                <div className="text-2xl font-mono font-semibold tabular-nums" style={{ color: "var(--text)" }}>
                   {result.threshold}
                 </div>
-                <span className="text-[10px] text-slate-400 block">
-                  Optimal F1 Cutoff
-                </span>
+                <span className="text-xs" style={{ color: "var(--text-muted)" }}>Optimal F1 threshold</span>
               </div>
             </div>
           )}
@@ -534,4 +604,3 @@ export default function AnalyzePage() {
     </div>
   );
 }
-

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <!-- Droplet outline -->
+  <path d="M16 4 C16 4 6 14 6 20 C6 26 10.7 30 16 30 C21.3 30 26 26 26 20 C26 14 16 4 16 4Z"
+        stroke="currentColor" stroke-width="2" fill="none" stroke-linejoin="round"/>
+  <!-- Eye / aperture inside -->
+  <ellipse cx="16" cy="21" rx="5" ry="3.5" stroke="currentColor" stroke-width="1.5" fill="none"/>
+  <circle cx="16" cy="21" r="1.5" fill="currentColor"/>
+</svg>
+

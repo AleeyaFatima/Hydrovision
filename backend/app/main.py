@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="AquaMap AI Floodwater Aerial Image Segmentation API",
+    description="HydroVision AI Floodwater Aerial Image Segmentation API",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",

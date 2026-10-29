@@ -2,497 +2,488 @@
 
 import Link from "next/link";
 import {
-  Droplets,
   ArrowRight,
-  ShieldCheck,
-  Zap,
-  Activity,
-  Layers,
-  BarChart3,
-  Compass,
-  AlertTriangle,
-  Cpu,
-  FileText,
   ChevronDown,
+  Database,
+  FileText,
+  BarChart3,
 } from "lucide-react";
-import { useState } from "react";
-import { EarthGlobe } from "@/components/EarthGlobe";
+import { useState, useEffect, useRef } from "react";
+import dynamic from "next/dynamic";
 import { ScrollReveal } from "@/components/ScrollReveal";
 import { ArchitectureDiagram } from "@/components/ArchitectureDiagram";
 
+const EarthGlobe = dynamic(
+  () => import("@/components/EarthGlobe").then((m) => m.EarthGlobe),
+  { ssr: false, loading: () => <div className="h-[520px] w-full flex items-center justify-center" style={{ color: "var(--text-muted)" }}>Loading globe…</div> }
+);
+
+// ── Count-up hook ──────────────────────────────────────────────────
+function useCountUp(target: number, duration = 1200, start = false) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!start) return;
+    let raf: number;
+    const startTime = performance.now();
+    const tick = (now: number) => {
+      const t = Math.min((now - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setVal(eased * target);
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [start, target, duration]);
+  return val;
+}
+
+// ── Sample Strip (hover to reveal mask) ──────────────────────────
+const SAMPLES = [
+  { id: 1, url: "/samples/sample_1.jpg", waterPct: "26.6%", label: "Flooded field" },
+  { id: 2, url: "/samples/sample_2.jpg", waterPct: "9.9%",  label: "Urban drainage" },
+  { id: 3, url: "/samples/sample_3.jpg", waterPct: "45.1%", label: "River overflow" },
+  { id: 4, url: "/samples/sample_4.jpg", waterPct: "31.2%", label: "Aerial flood" },
+  { id: 5, url: "/samples/sample_5.jpg", waterPct: "18.7%", label: "Wetlands" },
+];
+
+function SampleStrip() {
+  const [hovered, setHovered] = useState<number | null>(null);
+  const [predSrc, setPredSrc] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    fetch("/samples/samples.json")
+      .then((r) => r.json())
+      .then((data: Array<{ id: number; prediction?: { overlay_png_base64?: string } }>) => {
+        const map: Record<number, string> = {};
+        data.forEach((s) => {
+          if (s.prediction?.overlay_png_base64) {
+            map[s.id] = `data:image/png;base64,${s.prediction.overlay_png_base64}`;
+          }
+        });
+        setPredSrc(map);
+      })
+      .catch(() => {});
+  }, []);
+
+  return (
+    <div className="space-y-3">
+      <p className="text-label text-center">
+        Hover to see HydroVision&apos;s prediction on images it never saw during training
+      </p>
+      <div className="flex gap-3 overflow-x-auto pb-2 snap-x">
+        {SAMPLES.map((s) => (
+          <div
+            key={s.id}
+            className="relative flex-shrink-0 snap-start rounded-xl overflow-hidden cursor-pointer"
+            style={{ width: 180, height: 120, border: "1px solid var(--border)" }}
+            onMouseEnter={() => setHovered(s.id)}
+            onMouseLeave={() => setHovered(null)}
+            onFocus={() => setHovered(s.id)}
+            onBlur={() => setHovered(null)}
+            tabIndex={0}
+            role="img"
+            aria-label={`${s.label}: ${s.waterPct} water pixels`}
+          >
+            {/* Raw image */}
+            <img
+              src={s.url}
+              alt={s.label}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            {/* Prediction overlay — clip-path wipe */}
+            {predSrc[s.id] && (
+              <img
+                src={predSrc[s.id]}
+                alt={`${s.label} prediction`}
+                className="absolute inset-0 h-full w-full object-cover transition-all duration-300"
+                style={{
+                  clipPath: hovered === s.id ? "inset(0 0% 0 0)" : "inset(0 100% 0 0)",
+                }}
+              />
+            )}
+            {/* Label */}
+            <div
+              className="absolute bottom-0 left-0 right-0 px-2 py-1.5"
+              style={{ background: "linear-gradient(transparent, rgba(0,0,0,0.75))" }}
+            >
+              <p className="text-xs text-white font-medium truncate">{s.label}</p>
+              <p className="text-xs font-mono" style={{ color: "var(--water)" }}>
+                {s.waterPct} water
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Metric Card ───────────────────────────────────────────────────
+function MetricCard({
+  label,
+  value,
+  unit,
+  caption,
+  started,
+}: {
+  label: string;
+  value: number;
+  unit?: string;
+  caption: string;
+  started: boolean;
+}) {
+  const count = useCountUp(value, 1200, started);
+  const formatted = unit === "ms"
+    ? `${Math.round(count)}${unit}`
+    : count.toFixed(3);
+
+  return (
+    <div className="space-y-1 text-center">
+      <div
+        className="font-mono font-semibold tabular-nums"
+        style={{ color: "var(--water)", fontSize: "clamp(28px,3.5vw,44px)" }}
+      >
+        {formatted}
+      </div>
+      <div className="text-sm font-medium" style={{ color: "var(--text)" }}>{label}</div>
+      <div className="text-xs" style={{ color: "var(--text-muted)" }}>{caption}</div>
+    </div>
+  );
+}
+
+// ── FAQ Item ──────────────────────────────────────────────────────
+function FaqItem({
+  q,
+  a,
+  open,
+  onToggle,
+}: {
+  q: string;
+  a: string;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div
+      className="rounded-xl overflow-hidden transition-all"
+      style={{ border: "1px solid var(--border)", background: "var(--surface-1)" }}
+    >
+      <button
+        onClick={onToggle}
+        className="flex w-full items-start justify-between gap-4 px-6 py-4 text-left transition-colors hover:bg-white/5"
+        aria-expanded={open}
+      >
+        <span className="text-sm font-medium" style={{ color: "var(--text)" }}>
+          {q}
+        </span>
+        <ChevronDown
+          className="mt-0.5 h-5 w-5 flex-shrink-0 transition-transform"
+          style={{ color: "var(--text-muted)", transform: open ? "rotate(180deg)" : "rotate(0)" }}
+        />
+      </button>
+      {open && (
+        <div
+          className="px-6 pb-5"
+          style={{ borderTop: "1px solid var(--border)", paddingTop: "1rem" }}
+        >
+          <p className="text-small" style={{ color: "var(--text-2)" }}>{a}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Main Landing Page ─────────────────────────────────────────────
 export default function LandingPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const metricsRef = useRef<HTMLDivElement>(null);
+  const [metricsStarted, setMetricsStarted] = useState(false);
 
-  const toggleFaq = (index: number) => {
-    setOpenFaq(openFaq === index ? null : index);
-  };
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) setMetricsStarted(true); },
+      { threshold: 0.5 }
+    );
+    if (metricsRef.current) observer.observe(metricsRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   const faqItems = [
     {
       q: "Why combined BCE + Dice loss instead of standard Cross-Entropy?",
-      a: "In aerial flood imagery, water pixels can occupy as little as 4% or up to 88% of the scene (severe foreground-background imbalance). Standard Cross-Entropy produces gradients dominated by the majority background class. Dice Loss directly optimizes the overlap (Sørensen–Dice coefficient) between prediction and ground truth, while BCE stabilizes early gradient descent. Our 0.5 BCE + 0.5 Dice formulation ensures rapid convergence and high boundary precision.",
+      a: "In aerial flood imagery, water pixels can occupy as little as 4% or up to 88% of the scene (severe foreground–background imbalance). Standard Cross-Entropy produces gradients dominated by the majority background class. Dice Loss directly optimises the overlap between prediction and ground truth, while BCE stabilises early gradient descent. The 0.5 BCE + 0.5 Dice formulation ensures rapid convergence and high boundary precision.",
     },
     {
-      q: "Why does U-Net MobileNetV2 outperform U-Net from scratch by +4.3% Dice?",
-      a: "Our empirical benchmark evaluated on the unseen 44-image test split demonstrates that MobileNetV2 (0.8840 Dice) significantly outperforms training from scratch (0.8407 Dice). On small, specialized aerial datasets (~290 images), training from scratch struggles to learn low-level visual primitives (edges, gradients, textures). Pre-training on ImageNet-1k equips the encoder with robust multi-scale filters, allowing the network to dedicate its capacity to learning aerial water reflectance patterns.",
+      q: "Why does U-Net MobileNetV2 outperform U-Net from scratch by +4.3 Dice points?",
+      a: "Measured on the 44-image held-out test split: MobileNetV2 (0.884 Dice) vs. scratch (0.841 Dice). On a small, specialised aerial dataset of ~290 images, training from scratch struggles with low-level visual primitives. Pre-training on ImageNet-1k equips the encoder with robust multi-scale filters, so the network can focus on learning aerial water reflectance patterns.",
     },
     {
       q: "How does Test-Time Augmentation (TTA) quantify prediction uncertainty?",
-      a: "During inference, an image is passed through 4 geometric transformations: identity, horizontal flip, vertical flip, and diagonal transpose. The 4 resulting probability maps are de-augmented and averaged. The standard deviation across passes forms an empirical pixel uncertainty map. Crisp flood boundaries exhibit low variance (<0.05), whereas ambiguous silt edges and mud reflections exhibit high variance (>0.25), alerting emergency responders to uncertain margins.",
+      a: "The image is passed through 4 geometric transforms: identity, horizontal flip, vertical flip, and diagonal transpose. The 4 probability maps are de-augmented and averaged. Standard deviation across passes forms a pixel uncertainty map. Sharp flood boundaries show low variance (<0.05); ambiguous silt edges and mud reflections show high variance (>0.25).",
     },
     {
-      q: "How was data leakage prevented across train, validation, and test splits?",
-      a: "Aerial datasets often contain near-duplicate video frames or contiguous flight passes. We computed 64-bit perceptual hashes (dHash) across all 290 images and identified 11 near-duplicate clusters (Hamming distance ≤ 8). Split generation enforced strict cluster-grouping: all duplicate variants of a flight path were assigned exclusively to either Train, Val, or Test, guaranteeing zero visual contamination of the test split.",
+      q: "How was data leakage controlled across splits?",
+      a: "We computed 64-bit perceptual hashes (dHash) across all 290 images and identified near-duplicate clusters (Hamming distance ≤ 8). Split generation enforced strict cluster-grouping so all variants of a flight pass land in the same split. This is described as leakage-controlled, not zero leakage, because the test images come from the same distribution.",
     },
     {
-      q: "What are AquaMap's known physical sensor limitations?",
-      a: "AquaMap v2 processes RGB optical imagery. Consequently, it cannot penetrate dense canopy or thick night cloud cover (unlike active microwave SAR Sentinel-1). In conditions of extreme turbid silt where water color matches surrounding wet earth, AquaMap flags the region with elevated TTA uncertainty rather than producing a false confident classification.",
+      q: "What are HydroVision's known limitations?",
+      a: "HydroVision processes RGB optical imagery only. It cannot penetrate dense canopy or heavy cloud cover (unlike microwave SAR sensors). In conditions of extreme turbid silt where water colour matches surrounding wet earth, the model flags elevated TTA uncertainty rather than producing a falsely confident classification. It is a research prototype and should not be used for safety-critical decisions.",
     },
   ];
 
   return (
-    <div className="flex flex-col gap-24 pb-24">
-      {/* 1. HERO SECTION */}
+    <div className="flex flex-col" style={{ gap: "6rem" }}>
+      {/* ── 1. HERO ───────────────────────────────────────────── */}
       <section className="relative overflow-hidden pt-8 md:pt-14">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="container-landing">
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
-            {/* Left Content */}
+            {/* Left */}
             <div className="lg:col-span-7 space-y-6">
-              {/* Telemetry pill */}
-              <div className="inline-flex items-center gap-2 rounded-full border border-accent-cyan/30 bg-accent-cyan/10 px-3.5 py-1 text-xs font-mono text-accent-cyan shadow-cyan-glow">
-                <span className="flex h-2 w-2 rounded-full bg-accent-cyan animate-pulse" />
-                <span>BENCHMARK VERIFIED • 3-MODEL COMPARISON • ONNX 31ms</span>
-              </div>
+              <p className="text-label">AI Flood Segmentation</p>
 
-              <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl leading-[1.15]">
-                Explainable Aerial Flood Intelligence at{" "}
-                <span className="bg-gradient-to-r from-accent-cyan via-accent-blue to-accent-emerald bg-clip-text text-transparent">
-                  Sub-Pixel Precision
+              <h1 className="text-display" style={{ color: "var(--text)" }}>
+                See the flood.<br />
+                <span
+                  className="bg-clip-text text-transparent"
+                  style={{ backgroundImage: "linear-gradient(135deg, var(--water), #3B82F6)" }}
+                >
+                  Pixel by pixel.
                 </span>
               </h1>
 
-              <p className="max-w-2xl text-base text-slate-300 sm:text-lg leading-relaxed">
-                Transform drone and UAV aerial imagery into calibrated flood inundation boundaries in 31ms.
-                Featuring Test-Time Augmentation (TTA) uncertainty estimation, Grad-CAM spatial explainability,
-                and zero data leakage.
+              <p className="text-body-lg" style={{ color: "var(--text-2)", maxWidth: "56ch" }}>
+                HydroVision uses a transfer-learning U-Net to label floodwater in drone and
+                aerial photos, then shows how confident it is and what it looked at.
               </p>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-4 pt-2">
+              <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Link
                   href="/analyze"
-                  className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-accent-cyan to-accent-blue px-6 py-3.5 text-sm font-bold text-black transition-all hover:scale-[1.02] hover:shadow-cyan-glow"
+                  className="flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all hover:opacity-90"
+                  style={{
+                    background: "var(--btn-primary-bg)",
+                    color: "var(--btn-primary-fg)",
+                  }}
                 >
-                  <span>Launch Live Analyzer</span>
+                  <span>Analyze an image</span>
                   <ArrowRight className="h-4 w-4" />
                 </Link>
 
-                <Link
-                  href="/performance"
-                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-surface px-6 py-3.5 text-sm font-semibold text-white transition-all hover:bg-white/5 hover:border-white/20"
+                <a
+                  href="#how-it-works"
+                  className="flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all"
+                  style={{
+                    border: "1px solid var(--border)",
+                    background: "var(--surface-1)",
+                    color: "var(--text-2)",
+                  }}
                 >
-                  <BarChart3 className="h-4 w-4 text-accent-cyan" />
-                  <span>3-Model Benchmark</span>
-                </Link>
+                  <span>See how it works</span>
+                  <ChevronDown className="h-4 w-4" />
+                </a>
               </div>
 
-              {/* Verified Metrics Counter */}
-              <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10 max-w-lg font-mono">
-                <div>
-                  <div className="text-2xl font-bold text-accent-cyan">0.884</div>
-                  <div className="text-[11px] text-slate-400">Test Dice Score</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-accent-emerald">30.9 ms</div>
-                  <div className="text-[11px] text-slate-400">ONNX CPU Latency</div>
-                </div>
-                <div>
-                  <div className="text-2xl font-bold text-accent-coral">2.58x</div>
-                  <div className="text-[11px] text-slate-400">Runtime Speedup</div>
-                </div>
+              {/* Proof Row */}
+              <div
+                ref={metricsRef}
+                className="grid grid-cols-3 gap-4 pt-4"
+                style={{ borderTop: "1px solid var(--border)" }}
+              >
+                <MetricCard label="Test Dice" value={0.884} caption="44 held-out test images" started={metricsStarted} />
+                <MetricCard label="Test IoU" value={0.792} caption="44 held-out test images" started={metricsStarted} />
+                <MetricCard label="CPU Latency" value={31} unit="ms" caption="ONNX Runtime, per 256×256 image" started={metricsStarted} />
               </div>
             </div>
 
-            {/* Right: 3D Earth Globe */}
-            <div className="lg:col-span-5 flex flex-col items-center justify-center">
-              <EarthGlobe />
+            {/* Right – Globe */}
+            <div className="lg:col-span-5 flex justify-center">
+              <div className="w-full max-w-[480px]">
+                <EarthGlobe />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* 2. SIGNATURE INTERACTIVE SCROLL REVEAL */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 space-y-2 text-center md:text-left">
-          <div className="flex items-center gap-2 justify-center md:justify-start">
-            <span className="rounded bg-accent-cyan/15 px-2 py-0.5 font-mono text-xs font-semibold text-accent-cyan border border-accent-cyan/30">
-              INTERACTIVE DEMO
-            </span>
-            <span className="text-xs text-slate-400">Real Test-Set Evaluation (Kaggle Dataset)</span>
-          </div>
-          <h2 className="text-2xl font-bold text-white sm:text-3xl">
-            Laser-Sharp Flood Boundary Demarcation
+      {/* ── 2. Live Sample Strip ──────────────────────────────── */}
+      <section className="container-landing">
+        <SampleStrip />
+      </section>
+
+      {/* ── 3. Before / After Slider ──────────────────────────── */}
+      <section className="container-landing space-y-4">
+        <div className="text-center space-y-2">
+          <p className="text-label">Real model output on an unseen test image</p>
+          <h2 className="text-h2" style={{ color: "var(--text)" }}>
+            See the prediction for yourself
           </h2>
-          <p className="text-sm text-slate-400 max-w-2xl">
-            Drag the laser slider below to wipe between the raw drone capture and AquaMap's real-time segmentation mask.
+          <p className="text-small" style={{ color: "var(--text-2)" }}>
+            Drag the divider to compare the raw aerial image with HydroVision&apos;s water mask.
           </p>
         </div>
-
         <ScrollReveal />
-      </section>
-
-      {/* 3. THE PROBLEM & DISASTER TELEMETRY */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-white/10 bg-surface/50 p-8 backdrop-blur-md">
-          <div className="max-w-2xl space-y-2">
-            <div className="flex items-center gap-2 text-accent-coral">
-              <AlertTriangle className="h-4 w-4" />
-              <span className="font-mono text-xs font-semibold uppercase tracking-wider">
-                Operational Reality
-              </span>
-            </div>
-            <h2 className="text-2xl font-bold text-white sm:text-3xl">
-              Why Classical Remote Sensing Fails First Responders
-            </h2>
-            <p className="text-sm text-slate-300">
-              During flash floods, emergency crews lose critical hours when segmentation algorithms misclassify wet asphalt as standing water or miss shallow flooded corridors under tree canopies.
-            </p>
-          </div>
-
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="rounded-xl border border-white/5 bg-[#050B18]/70 p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-semibold text-accent-coral">VALENCIA, SPAIN (2024)</span>
-                <span className="text-[10px] text-slate-500">500mm / 8hrs</span>
-              </div>
-              <h4 className="text-base font-bold text-white">Urban Chokepoints</h4>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Fast-moving muddy flash floods destroyed bridges and submerged tunnels. Classical RGB thresholding failed due to high sediment turbidity matching road surface colors.
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-white/5 bg-[#050B18]/70 p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-semibold text-accent-coral">DERNA, LIBYA (2023)</span>
-                <span className="text-[10px] text-slate-500">11,000+ Casualties</span>
-              </div>
-              <h4 className="text-base font-bold text-white">Catastrophic Dam Breach</h4>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Entire city quarters were swept into the Mediterranean in minutes. First responders required instant aerial verification of washed-out evacuation corridors.
-              </p>
-            </div>
-
-            <div className="rounded-xl border border-white/5 bg-[#050B18]/70 p-5 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-mono font-semibold text-accent-coral">HOUSTON, TX (2017)</span>
-                <span className="text-[10px] text-slate-500">150,000 Homes</span>
-              </div>
-              <h4 className="text-base font-bold text-white">Suburban Inundation</h4>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Hurricane Harvey dumped 60+ inches of rain. Aerial drones mapped residential streets to direct shallow-draft rescue boats away from submerged hazards.
-              </p>
-            </div>
-          </div>
+        <div className="text-center">
+          <Link
+            href="/analyze"
+            className="text-sm font-medium hover:underline"
+            style={{ color: "var(--link)" }}
+          >
+            Try your own image →
+          </Link>
         </div>
       </section>
 
-      {/* 4. HOW IT WORKS (U-NET ARCHITECTURE) */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 space-y-2">
-          <div className="flex items-center gap-2">
-            <span className="rounded bg-accent-cyan/15 px-2 py-0.5 font-mono text-xs font-semibold text-accent-cyan border border-accent-cyan/30">
-              DEEP LEARNING PIPELINE
-            </span>
-            <span className="text-xs text-slate-400">Viva-Grade Pedagogical Architecture</span>
-          </div>
-          <h2 className="text-2xl font-bold text-white sm:text-3xl">
-            Inside the AquaMap U-Net Neural Engine
-          </h2>
-          <p className="text-sm text-slate-400 max-w-2xl">
-            Explore how lateral skip connections bridge high-frequency spatial edge details across contracting and expanding convolutional pathways.
+      {/* ── 4. How It Works ───────────────────────────────────── */}
+      <section id="how-it-works" className="container-landing space-y-10">
+        <div className="text-center space-y-3">
+          <p className="text-label">Architecture</p>
+          <h2 className="text-h2" style={{ color: "var(--text)" }}>How HydroVision works</h2>
+          <p className="text-body" style={{ color: "var(--text-2)", maxWidth: "60ch", margin: "0 auto" }}>
+            A U-Net with a MobileNetV2 encoder pre-trained on ImageNet-1k is fine-tuned on aerial flood images.
+            The decoder reconstructs a pixel-wise water mask, and TTA uncertainty quantifies confidence.
           </p>
         </div>
-
         <ArchitectureDiagram />
       </section>
 
-      {/* 5. BENTO GRID (CORE CAPABILITIES) */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 space-y-2 text-center md:text-left">
-          <div className="flex items-center gap-2 justify-center md:justify-start">
-            <span className="rounded bg-accent-cyan/15 px-2 py-0.5 font-mono text-xs font-semibold text-accent-cyan border border-accent-cyan/30">
-              CORE CAPABILITIES
-            </span>
-          </div>
-          <h2 className="text-2xl font-bold text-white sm:text-3xl">
-            Engineered for High-Stakes Disaster Telemetry
-          </h2>
+      {/* ── 5. Bento grid ─────────────────────────────────────── */}
+      <section className="container-landing space-y-6">
+        <div className="text-center space-y-2">
+          <p className="text-label">What HydroVision can do</p>
+          <h2 className="text-h2" style={{ color: "var(--text)" }}>Key capabilities</h2>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Card 1: Transfer Learning */}
-          <div className="rounded-2xl border border-white/10 bg-surface/80 p-6 backdrop-blur-md space-y-3 glass-panel-hover">
-            <div className="h-10 w-10 rounded-xl bg-accent-cyan/10 border border-accent-cyan/30 flex items-center justify-center text-accent-cyan">
-              <Cpu className="h-5 w-5" />
-            </div>
-            <h3 className="text-lg font-bold text-white">MobileNetV2 Transfer Learning</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Trained on ImageNet-1k, utilizing inverted residuals and linear bottlenecks. Achieves a <strong>0.8840 test Dice score</strong> (+4.3% higher than scratch), critical for small drone datasets.
-            </p>
-          </div>
-
-          {/* Card 2: TTA Uncertainty */}
-          <div className="rounded-2xl border border-white/10 bg-surface/80 p-6 backdrop-blur-md space-y-3 glass-panel-hover">
-            <div className="h-10 w-10 rounded-xl bg-accent-amber/10 border border-accent-amber/30 flex items-center justify-center text-accent-amber">
-              <ShieldCheck className="h-5 w-5" />
-            </div>
-            <h3 className="text-lg font-bold text-white">Test-Time Uncertainty (TTA)</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Calculates pixel-level standard deviation across 4 geometric flip augmentations. Delivers confidence bounds on flood boundaries and alerts operators to ambiguous marsh margins.
-            </p>
-          </div>
-
-          {/* Card 3: Grad-CAM Explainability */}
-          <div className="rounded-2xl border border-white/10 bg-surface/80 p-6 backdrop-blur-md space-y-3 glass-panel-hover">
-            <div className="h-10 w-10 rounded-xl bg-accent-coral/10 border border-accent-coral/30 flex items-center justify-center text-accent-coral">
-              <Layers className="h-5 w-5" />
-            </div>
-            <h3 className="text-lg font-bold text-white">Grad-CAM Spatial Interpretability</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Backpropagates segmentation gradients into the final decoder convolutional stage to visualize exactly which spatial features drove the water classification.
-            </p>
-          </div>
-
-          {/* Card 4: Change Detection */}
-          <div className="rounded-2xl border border-white/10 bg-surface/80 p-6 backdrop-blur-md space-y-3 glass-panel-hover">
-            <div className="h-10 w-10 rounded-xl bg-accent-blue/10 border border-accent-blue/30 flex items-center justify-center text-accent-blue">
-              <Activity className="h-5 w-5" />
-            </div>
-            <h3 className="text-lg font-bold text-white">Before & After Flood Tracking</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Calculates delta inundation percentages between two flight passes. Automatically renders newly submerged zones in <span className="text-accent-coral font-bold">Coral</span> and receded waters in <span className="text-accent-emerald font-bold">Emerald</span>.
-            </p>
-          </div>
-
-          {/* Card 5: ONNX Speed */}
-          <div className="rounded-2xl border border-white/10 bg-surface/80 p-6 backdrop-blur-md space-y-3 glass-panel-hover">
-            <div className="h-10 w-10 rounded-xl bg-accent-emerald/10 border border-accent-emerald/30 flex items-center justify-center text-accent-emerald">
-              <Zap className="h-5 w-5" />
-            </div>
-            <h3 className="text-lg font-bold text-white">ONNX Runtime 2.58x Acceleration</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Exported with constant folding and graph optimization. Cuts CPU inference latency from 79.8ms down to <strong>30.9ms</strong>, enabling 32+ FPS edge inference on portable rescue laptops.
-            </p>
-          </div>
-
-          {/* Card 6: PDF Reports */}
-          <div className="rounded-2xl border border-white/10 bg-surface/80 p-6 backdrop-blur-md space-y-3 glass-panel-hover">
-            <div className="h-10 w-10 rounded-xl bg-purple-500/10 border border-purple-500/30 flex items-center justify-center text-purple-400">
-              <FileText className="h-5 w-5" />
-            </div>
-            <h3 className="text-lg font-bold text-white">Automated PDF Incident Reports</h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Generates instant, publication-ready disaster assessment dossiers with 2x2 visual diagnostics, numerical water area percentage, uncertainty metrics, and legal disclaimers.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. 3-MODEL BENCHMARK TEASER */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-white/10 bg-surface/70 p-6 md:p-8 backdrop-blur-md">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-6">
-            <div>
-              <span className="rounded bg-accent-cyan/15 px-2 py-0.5 font-mono text-xs font-semibold text-accent-cyan border border-accent-cyan/30">
-                SCIENTIFIC BENCHMARK
-              </span>
-              <h2 className="mt-2 text-2xl font-bold text-white">
-                Honest 3-Model Test Split Evaluation
-              </h2>
-              <p className="text-xs text-slate-400">
-                Strict evaluation on 44 unseen aerial test images with leak-free perceptual hashing split.
-              </p>
-            </div>
-            <Link
-              href="/performance"
-              className="inline-flex items-center gap-2 rounded-xl bg-surface-elevated border border-white/10 px-4 py-2 text-xs font-semibold text-accent-cyan hover:bg-white/5"
-            >
-              <span>View Full Charts & Tables</span>
-              <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* SegFormer B0 */}
-            <div className="rounded-xl border border-white/5 bg-[#050B18]/60 p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-sm text-white">SegFormer-B0</span>
-                <span className="rounded bg-accent-cyan/15 px-2 py-0.5 font-mono text-[10px] text-accent-cyan">
-                  Transformer Attention
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 font-mono text-xs">
-                <div>
-                  <span className="text-slate-500 block text-[10px]">Test Dice</span>
-                  <span className="text-base font-bold text-accent-cyan">0.8847</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[10px]">Test IoU</span>
-                  <span className="text-base font-bold text-white">0.7932</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[10px]">Recall</span>
-                  <span className="text-base font-bold text-accent-emerald">0.8922</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[10px]">Latency (MPS)</span>
-                  <span className="text-base font-bold text-white">73.1 ms</span>
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Highest recall of all models due to lightweight multi-head self-attention capturing global context.
-              </p>
-            </div>
-
-            {/* U-Net MobileNetV2 (Default Production Model) */}
-            <div className="rounded-xl border border-accent-cyan/40 bg-accent-cyan/[0.04] p-5 space-y-4 shadow-cyan-glow relative">
-              <div className="absolute -top-2.5 right-4 rounded-full bg-accent-cyan px-2.5 py-0.5 font-mono text-[9px] font-bold text-black uppercase tracking-wider">
-                Production Model
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-sm text-white">U-Net MobileNetV2</span>
-                <span className="rounded bg-accent-emerald/15 px-2 py-0.5 font-mono text-[10px] text-accent-emerald">
-                  CNN + Skip
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 font-mono text-xs">
-                <div>
-                  <span className="text-slate-500 block text-[10px]">Test Dice</span>
-                  <span className="text-base font-bold text-accent-cyan">0.8840</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[10px]">Test IoU</span>
-                  <span className="text-base font-bold text-white">0.7922</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[10px]">Precision</span>
-                  <span className="text-base font-bold text-accent-emerald">0.8869</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[10px]">ONNX CPU</span>
-                  <span className="text-base font-bold text-accent-cyan">30.9 ms</span>
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Optimal trade-off: highest precision (0.8869), exceptional edge delineation, and 2.58x ONNX CPU acceleration.
-              </p>
-            </div>
-
-            {/* U-Net Scratch (Ablation Baseline) */}
-            <div className="rounded-xl border border-white/5 bg-[#050B18]/60 p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-sm text-white">U-Net Scratch</span>
-                <span className="rounded bg-white/5 px-2 py-0.5 font-mono text-[10px] text-slate-400">
-                  Ablation Baseline
-                </span>
-              </div>
-              <div className="grid grid-cols-2 gap-3 font-mono text-xs">
-                <div>
-                  <span className="text-slate-500 block text-[10px]">Test Dice</span>
-                  <span className="text-base font-bold text-slate-300">0.8407</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[10px]">Test IoU</span>
-                  <span className="text-base font-bold text-white">0.7252</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[10px]">Recall</span>
-                  <span className="text-base font-bold text-slate-300">0.8311</span>
-                </div>
-                <div>
-                  <span className="text-slate-500 block text-[10px]">Δ vs Transfer</span>
-                  <span className="text-base font-bold text-accent-coral">-4.33% Dice</span>
-                </div>
-              </div>
-              <p className="text-[11px] text-slate-400">
-                Proves transfer learning is essential for small aerial datasets; lacks pre-trained visual edge priors.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 7. VIVA & SCIENTIFIC DEFENSE FAQ */}
-      <section className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-6 space-y-2 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-surface px-3 py-1 font-mono text-xs text-accent-cyan">
-            <span>SCIENTIFIC VIVA CHEAT SHEET</span>
-          </div>
-          <h2 className="text-2xl font-bold text-white sm:text-3xl">
-            Frequently Asked Questions & Examiner Questions
-          </h2>
-          <p className="text-sm text-slate-400">
-            Pedagogical answers to anticipated viva and academic defense questions.
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          {faqItems.map((item, idx) => (
-            <div
-              key={idx}
-              className="rounded-xl border border-white/10 bg-surface/80 overflow-hidden backdrop-blur-md transition-all"
-            >
-              <button
-                onClick={() => toggleFaq(idx)}
-                className="w-full flex items-center justify-between p-4 text-left font-semibold text-sm text-white hover:text-accent-cyan transition-colors"
-              >
-                <span>{item.q}</span>
-                <ChevronDown
-                  className={`h-4 w-4 text-slate-400 transition-transform ${
-                    openFaq === idx ? "rotate-180 text-accent-cyan" : ""
-                  }`}
-                />
-              </button>
-              {openFaq === idx && (
-                <div className="border-t border-white/5 bg-[#050B18]/60 p-4 text-xs text-slate-300 leading-relaxed">
-                  {item.a}
-                </div>
-              )}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[
+            {
+              icon: "💧",
+              title: "Pixel-level water masks",
+              body: "Segments floodwater at pixel level in aerial and drone RGB imagery using a transfer-learning U-Net with Dice 0.884.",
+            },
+            {
+              icon: "🔬",
+              title: "TTA Uncertainty maps",
+              body: "Four-pass test-time augmentation produces per-pixel uncertainty. High values flag ambiguous silt, shadows, or cloud edges.",
+            },
+            {
+              icon: "🧠",
+              title: "Grad-CAM explainability",
+              body: "Gradient-weighted class activation maps show which pixels drove the model's water prediction — interpretable for auditors.",
+            },
+            {
+              icon: "⚡",
+              title: "31 ms ONNX inference",
+              body: "ONNX Runtime delivers 2.6× speedup over PyTorch CPU on the same hardware, at max |Δ output| < 1 × 10⁻⁵.",
+            },
+            {
+              icon: "📊",
+              title: "3-model benchmark",
+              body: "Comparable evaluation on 44 held-out test images: SegFormer-B0, U-Net MobileNetV2, and U-Net from scratch.",
+            },
+            {
+              icon: "📄",
+              title: "Downloadable PDF report",
+              body: "Overlay, uncertainty map, Grad-CAM, and per-image metrics bundled into a PDF for offline review.",
+            },
+          ].map((item) => (
+            <div key={item.title} className="card">
+              <div className="text-3xl mb-3">{item.icon}</div>
+              <h3 className="text-h3 mb-2" style={{ color: "var(--text)" }}>{item.title}</h3>
+              <p className="text-small" style={{ color: "var(--text-2)" }}>{item.body}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* 8. FINAL CALL TO ACTION */}
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="relative overflow-hidden rounded-3xl border border-accent-cyan/30 bg-gradient-to-b from-surface to-[#050B18] p-8 md:p-14 text-center shadow-cyan-glow">
-          <div className="mx-auto max-w-2xl space-y-4">
-            <h2 className="text-3xl font-extrabold text-white sm:text-4xl">
-              Ready to Segment Drone Flood Photography?
-            </h2>
-            <p className="text-sm text-slate-300">
-              Upload aerial imagery or choose from pre-loaded test samples to evaluate segmentation masks, TTA uncertainty bounds, and Grad-CAM interpretability.
+      {/* ── 6. Quick links ────────────────────────────────────── */}
+      <section className="container-landing">
+        <div
+          className="rounded-2xl p-8 grid grid-cols-1 sm:grid-cols-3 gap-6"
+          style={{ background: "var(--surface-1)", border: "1px solid var(--border)" }}
+        >
+          <Link
+            href="/performance"
+            className="flex flex-col gap-2 rounded-xl p-5 transition-all hover:shadow-lg group"
+            style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
+          >
+            <BarChart3 className="h-6 w-6" style={{ color: "var(--water)" }} />
+            <h3 className="text-h3" style={{ color: "var(--text)" }}>Benchmark</h3>
+            <p className="text-small" style={{ color: "var(--text-2)" }}>
+              3-model comparison, ONNX latency, robustness, and error analysis.
             </p>
-            <div className="flex flex-wrap justify-center gap-4 pt-4">
-              <Link
-                href="/analyze"
-                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-accent-cyan to-accent-blue px-6 py-3.5 text-sm font-bold text-black transition-all hover:scale-105 hover:shadow-cyan-glow"
-              >
-                <span>Open Analysis Workspace</span>
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/compare"
-                className="flex items-center gap-2 rounded-xl border border-white/10 bg-surface px-6 py-3.5 text-sm font-semibold text-white hover:bg-white/5"
-              >
-                <Activity className="h-4 w-4 text-accent-cyan" />
-                <span>Run Temporal Change Detection</span>
-              </Link>
-            </div>
-          </div>
+          </Link>
+          <Link
+            href="/dataset"
+            className="flex flex-col gap-2 rounded-xl p-5 transition-all hover:shadow-lg group"
+            style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
+          >
+            <Database className="h-6 w-6" style={{ color: "var(--water)" }} />
+            <h3 className="text-h3" style={{ color: "var(--text)" }}>Dataset Explorer</h3>
+            <p className="text-small" style={{ color: "var(--text-2)" }}>
+              290 images, water % distribution, and how splits were controlled for leakage.
+            </p>
+          </Link>
+          <Link
+            href="/model-card"
+            className="flex flex-col gap-2 rounded-xl p-5 transition-all hover:shadow-lg group"
+            style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
+          >
+            <FileText className="h-6 w-6" style={{ color: "var(--water)" }} />
+            <h3 className="text-h3" style={{ color: "var(--text)" }}>Model Card</h3>
+            <p className="text-small" style={{ color: "var(--text-2)" }}>
+              Intended use, out-of-scope use, metrics, known failure cases, and ethical notes.
+            </p>
+          </Link>
+        </div>
+      </section>
+
+      {/* ── 7. FAQ ────────────────────────────────────────────── */}
+      <section className="container-landing space-y-6 pb-16">
+        <div className="text-center space-y-2">
+          <p className="text-label">Questions &amp; limitations</p>
+          <h2 className="text-h2" style={{ color: "var(--text)" }}>Common questions</h2>
+        </div>
+        <div className="max-w-3xl mx-auto space-y-3">
+          {faqItems.map((item, idx) => (
+            <FaqItem
+              key={idx}
+              q={item.q}
+              a={item.a}
+              open={openFaq === idx}
+              onToggle={() => setOpenFaq(openFaq === idx ? null : idx)}
+            />
+          ))}
+        </div>
+      </section>
+
+      {/* ── 8. CTA ────────────────────────────────────────────── */}
+      <section className="container-landing pb-24">
+        <div
+          className="rounded-2xl p-10 text-center space-y-5"
+          style={{
+            background: "linear-gradient(135deg, var(--surface-1), var(--surface-2))",
+            border: "1px solid var(--border)",
+          }}
+        >
+          <h2 className="text-h2" style={{ color: "var(--text)" }}>
+            Try it on your own image
+          </h2>
+          <p className="text-body" style={{ color: "var(--text-2)", maxWidth: "50ch", margin: "0 auto" }}>
+            Upload a drone or satellite aerial image and see a pixel-level flood mask, uncertainty map,
+            and Grad-CAM in seconds.
+          </p>
+          <Link
+            href="/analyze"
+            className="inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold transition-all hover:opacity-90"
+            style={{ background: "var(--btn-primary-bg)", color: "var(--btn-primary-fg)" }}
+          >
+            <span>Analyze an image</span>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+          <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+            Accepts JPEG or PNG up to 10 MB · No account required · Results stay in your browser
+          </p>
         </div>
       </section>
     </div>
   );
 }
-

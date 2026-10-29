@@ -76,7 +76,7 @@ def generate_pdf_report(
     story = []
 
     # Title & Metadata
-    story.append(Paragraph("AquaMap — AI Floodwater Segmentation Report", title_style))
+    story.append(Paragraph("HydroVision — AI Floodwater Segmentation Report", title_style))
     story.append(Paragraph(f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S UTC')} | Model: <b>{stats.get('model_name', 'U-Net')}</b>", subtitle_style))
     story.append(Spacer(1, 12))
 
@@ -165,7 +165,7 @@ def generate_pdf_report(
         story.append(Spacer(1, 14))
 
     # Disclaimer
-    story.append(Paragraph("<b>Disclaimer:</b> AquaMap is an AI screening and decision-support tool designed for rapid aerial visual analysis. It is not an official flood assessment and should be verified with ground-truth hydrologic surveys before critical life-safety emergency response deployment.", disclaimer_style))
+    story.append(Paragraph("<b>Disclaimer:</b> HydroVision is an AI screening and decision-support research prototype designed for aerial visual analysis. It is not an official flood assessment and should be verified with ground-truth hydrologic surveys before critical emergency response deployment.", disclaimer_style))
 
     doc.build(story)
     buffer.seek(0)

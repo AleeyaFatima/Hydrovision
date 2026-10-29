@@ -1,4 +1,4 @@
-# AquaMap v2: Explainable Aerial Floodwater Segmentation Engine
+# HydroVision: Explainable Aerial Floodwater Segmentation Engine
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python)](https://python.org)
@@ -8,7 +8,7 @@
 [![Test Dice](https://img.shields.io/badge/Test_Dice-0.8840-34D399)](#-scientific-3-model-benchmark)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAleeyaFatima%2Faquamap&root-directory=frontend)
 
-AquaMap v2 is a scientific aerial floodwater segmentation system engineered for real-time disaster response, drone reconnaissance, and academic thesis defense. 
+HydroVision is an explainable AI floodwater segmentation system engineered for aerial and drone imagery, rapid visual screening, and research defense.
 
 It pairs an optimized **U-Net with a MobileNetV2 encoder**, **Test-Time Augmentation (TTA) uncertainty quantification**, **Grad-CAM interpretability**, **multi-temporal flood change detection**, **automated ReportLab PDF incident reports**, and **2.58x CPU acceleration via ONNX Runtime (30.9 ms)**.
 

@@ -98,8 +98,9 @@ export interface MetricsResponse {
 
 export interface SampleItem {
   name: string;
+  filename?: string;
   url: string;
-  id?: string;
+  id?: string | number;
   water_percentage?: number;
   mean_uncertainty?: number;
   prediction?: PredictResponse;

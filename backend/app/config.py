@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parents[1]
 
 class Settings(BaseSettings):
     # App
-    APP_NAME: str = "AquaMap"
+    APP_NAME: str = "HydroVision API"
     APP_VERSION: str = "2.0.0"
     DEBUG: bool = False
     PORT: int = 8000
