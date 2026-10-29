@@ -71,6 +71,18 @@ def prepare_samples():
             "width": pred["image_size"][0],
             "height": pred["image_size"][1],
             "source_path": str(img_rel),
+            "prediction": {
+                "model_name": pred["model_name"],
+                "inference_ms": pred["inference_ms"],
+                "threshold": pred["threshold"],
+                "water_pixel_percentage": water_pct,
+                "mean_uncertainty": mean_unc,
+                "overlay_png_base64": pred["overlay_png_base64"],
+                "mask_png_base64": pred["mask_png_base64"],
+                "uncertainty_png_base64": pred["uncertainty_png_base64"],
+                "gradcam_png_base64": pred["gradcam_png_base64"],
+                "image_size": pred["image_size"],
+            }
         }
         sample_metadata.append(sample_info)
         print(f"Prepared {raw_name}: water={water_pct}%")
@@ -88,6 +100,47 @@ def prepare_samples():
     meta_file = samples_dir / "samples.json"
     with open(meta_file, "w") as f:
         json.dump(sample_metadata, f, indent=2)
+
+    # Pre-compute comparison between sample_2 (9.93%) and sample_6 (55.02%)
+    if len(sample_metadata) >= 6:
+        item_b = sample_metadata[1]["prediction"]
+        item_a = sample_metadata[5]["prediction"]
+        
+        # Build change mask
+        import base64
+        import io
+        from PIL import Image
+        mask_b = np.array(Image.open(io.BytesIO(base64.b64decode(item_b["mask_png_base64"]))).convert("L")) > 127
+        mask_a = np.array(Image.open(io.BytesIO(base64.b64decode(item_a["mask_png_base64"]))).convert("L")) > 127
+        
+        # Resize mask_b to match mask_a shape
+        target_h, target_w = mask_a.shape
+        mask_b_resized = np.array(Image.fromarray(mask_b).resize((target_w, target_h), Image.NEAREST))
+        
+        new_water = np.logical_and(mask_a, ~mask_b_resized)
+        receded_water = np.logical_and(mask_b_resized, ~mask_a)
+        unchanged_water = np.logical_and(mask_a, mask_b_resized)
+
+        change_rgb = np.zeros((target_h, target_w, 3), dtype=np.uint8)
+        change_rgb[new_water] = [251, 113, 133]        # Coral
+        change_rgb[receded_water] = [52, 211, 153]     # Green
+        change_rgb[unchanged_water] = [34, 211, 238]   # Cyan
+
+        change_b64 = engine.image_to_base64(change_rgb)
+        
+        comp_data = {
+            "before_water_percentage": sample_metadata[1]["water_percentage"],
+            "after_water_percentage": sample_metadata[5]["water_percentage"],
+            "delta_percentage_points": round(sample_metadata[5]["water_percentage"] - sample_metadata[1]["water_percentage"], 2),
+            "before_overlay_png_base64": item_b["overlay_png_base64"],
+            "after_overlay_png_base64": item_a["overlay_png_base64"],
+            "change_mask_png_base64": change_b64,
+            "alignment_success": True,
+            "notes": "Pre-computed benchmark comparison between Pass A (Sample 2) and Pass B (Sample 6).",
+        }
+        with open(samples_dir / "comparison.json", "w") as f:
+            json.dump(comp_data, f, indent=2)
+        print("Pre-computed comparison.json between sample 2 and 6.")
 
     print(f"\nSuccessfully prepared {len(sample_metadata)} demo samples into {samples_dir}")
 

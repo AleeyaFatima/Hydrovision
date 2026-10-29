@@ -55,10 +55,15 @@ export function ScrollReveal() {
           setIsHovering(true);
           handleSliderMove(e);
         }}
+        onTouchStart={(e) => {
+          setIsHovering(true);
+          handleSliderMove(e);
+        }}
         onTouchMove={(e) => {
           setIsHovering(true);
           handleSliderMove(e);
         }}
+        onTouchEnd={() => setIsHovering(false)}
         onMouseLeave={() => setIsHovering(false)}
         className="group relative h-[360px] sm:h-[480px] md:h-[540px] w-full cursor-ew-resize select-none overflow-hidden rounded-2xl border border-white/10 bg-surface shadow-2xl"
       >

@@ -71,11 +71,15 @@ export function ArchitectureDiagram() {
       </div>
 
       {/* Interactive SVG Diagram */}
-      <div className="mt-6 flex justify-center overflow-x-auto py-4">
-        <svg
-          viewBox="0 0 860 320"
-          className="w-full max-w-4xl h-auto select-none"
-        >
+      <div className="mt-4 md:mt-6">
+        <span className="md:hidden text-[10px] font-mono text-slate-400 block text-center mb-2">
+          ← Swipe horizontally to explore U-Net pipeline →
+        </span>
+        <div className="flex justify-start md:justify-center overflow-x-auto py-2 -mx-2 px-2 scrollbar-thin">
+          <svg
+            viewBox="0 0 860 320"
+            className="w-[860px] md:w-full max-w-4xl h-auto shrink-0 select-none"
+          >
           <defs>
             <linearGradient id="cyanGrad" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#22D3EE" stopOpacity="0.8" />
@@ -360,6 +364,7 @@ export function ArchitectureDiagram() {
             </text>
           </g>
         </svg>
+        </div>
       </div>
 
       {/* Explainer Box for Active Stage */}

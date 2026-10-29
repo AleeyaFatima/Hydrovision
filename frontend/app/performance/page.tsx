@@ -110,7 +110,7 @@ export default function PerformancePage() {
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex flex-wrap gap-1 rounded-xl border border-white/10 bg-surface p-1">
+        <div className="flex overflow-x-auto gap-1 rounded-xl border border-white/10 bg-surface p-1 max-w-full scrollbar-none">
           {(
             [
               { id: "benchmark", label: "3-Model Benchmark" },

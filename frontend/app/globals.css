@@ -5,18 +5,87 @@
 :root {
   --bg-color: #050B18;
   --surface-color: #0B1626;
+  --surface-elevated: #112239;
+  --surface-card: rgba(11, 22, 38, 0.75);
+  --border-color: rgba(255, 255, 255, 0.08);
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
   --accent-cyan: #22D3EE;
   --accent-blue: #2563EB;
   --accent-coral: #FB7185;
   --accent-emerald: #34D399;
 }
 
+html.light {
+  --bg-color: #F8FAFC;
+  --surface-color: #FFFFFF;
+  --surface-elevated: #F1F5F9;
+  --surface-card: rgba(255, 255, 255, 0.9);
+  --border-color: rgba(0, 0, 0, 0.08);
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --accent-cyan: #0284C7;
+  --accent-blue: #1D4ED8;
+  --accent-coral: #E11D48;
+  --accent-emerald: #059669;
+}
+
 body {
-  background-color: #050B18;
-  color: #F8FAFC;
+  background-color: var(--bg-color);
+  color: var(--text-primary);
   font-family: var(--font-sans, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
   overflow-x: hidden;
   min-height: 100vh;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+/* Light mode overrides for high-contrast legibility */
+html.light h1,
+html.light h2,
+html.light h3,
+html.light h4,
+html.light .text-white {
+  color: #0F172A !important;
+}
+
+html.light p,
+html.light .text-slate-300 {
+  color: #334155 !important;
+}
+
+html.light .text-slate-400 {
+  color: #64748B !important;
+}
+
+html.light .border-white\/10,
+html.light .border-white\/5,
+html.light .border-white\/20 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html.light .bg-surface {
+  background-color: #FFFFFF !important;
+}
+
+html.light .bg-surface\/80,
+html.light .bg-surface\/70,
+html.light .bg-surface\/60,
+html.light .bg-surface\/50 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
+html.light .bg-\[\#050B18\]\/70,
+html.light .bg-\[\#050B18\]\/60,
+html.light .bg-\[\#050B18\]\/80,
+html.light .bg-\[\#050B18\] {
+  background-color: #F1F5F9 !important;
+}
+
+html.light .bg-surface-elevated {
+  background-color: #F8FAFC !important;
 }
 
 /* Radar grid background texture */
@@ -27,8 +96,19 @@ body {
   background-size: 40px 40px;
 }
 
+html.light .bg-grid-pattern {
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
 .bg-radial-glow {
   background: radial-gradient(circle at 50% 20%, rgba(34, 211, 238, 0.08) 0%, transparent 65%);
+}
+
+html.light .bg-radial-glow {
+  background: radial-gradient(circle at 50% 20%, rgba(2, 132, 199, 0.06) 0%, transparent 65%);
 }
 
 /* Glassmorphism panel */
@@ -39,6 +119,12 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+html.light .glass-panel {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+}
+
 .glass-panel-hover {
   transition: all 0.25s ease-in-out;
 }
@@ -46,6 +132,11 @@ body {
   border-color: rgba(34, 211, 238, 0.4);
   box-shadow: 0 0 25px -5px rgba(34, 211, 238, 0.15);
   transform: translateY(-2px);
+}
+
+html.light .glass-panel-hover:hover {
+  border-color: rgba(2, 132, 199, 0.4);
+  box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.1);
 }
 
 /* Custom sleek scrollbar */
@@ -58,9 +149,17 @@ body {
   background: #050B18;
 }
 
+html.light ::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
 ::-webkit-scrollbar-thumb {
   background: #1E293B;
   border-radius: 9999px;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -72,4 +171,3 @@ body {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   letter-spacing: -0.02em;
 }
-

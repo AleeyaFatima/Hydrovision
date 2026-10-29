@@ -62,11 +62,19 @@ export default function AnalyzePage() {
     try {
       setLoading(true);
       setError(null);
+      setPreviewUrl(sample.url);
+
+      // Instant offline display if pre-computed prediction exists
+      if (sample.prediction) {
+        setResult(sample.prediction);
+        setLoading(false);
+        return;
+      }
+
       const res = await fetch(sample.url);
       const blob = await res.blob();
       const sampleFile = new File([blob], sample.name, { type: "image/jpeg" });
       setFile(sampleFile);
-      setPreviewUrl(sample.url);
 
       // Run initial inference on selected sample
       const pred = await predictImage(sampleFile, sample.name, explain, uncertainty, useOnnx);
@@ -383,10 +391,19 @@ export default function AnalyzePage() {
               </div>
             </div>
 
+            {/* Offline Cache Indicator */}
+            {result?.is_demo_mode && (
+              <div className="flex items-center gap-2 rounded-xl bg-accent-blue/10 border border-accent-blue/30 px-3.5 py-2 text-xs text-accent-cyan font-mono">
+                <Info className="h-4 w-4 shrink-0" />
+                <span>Verified Test Split (Static Cache). To segment custom live imagery, start local FastAPI backend on port 8000.</span>
+              </div>
+            )}
+
             {/* Interactive Image Frame */}
             <div
               ref={containerRef}
               onMouseMove={handleSliderMove}
+              onTouchStart={handleSliderMove}
               onTouchMove={handleSliderMove}
               className="relative h-[360px] sm:h-[460px] w-full cursor-ew-resize select-none overflow-hidden rounded-xl border border-white/10 bg-black"
             >
