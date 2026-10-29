@@ -10,19 +10,28 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#050B18",
+        background: {
+          DEFAULT: "#050914",
+          secondary: "#080E1A",
+        },
         surface: {
-          DEFAULT: "#0B1626",
-          elevated: "#112239",
-          card: "rgba(11, 22, 38, 0.75)",
+          DEFAULT: "#0A1424",
+          card: "#0A1424",
+          elevated: "#101D30",
+          highlight: "#16263D",
         },
         border: {
-          subtle: "rgba(255, 255, 255, 0.08)",
-          glow: "rgba(34, 211, 238, 0.3)",
+          DEFAULT: "#1E334B",
+          subtle: "#1E334B",
+          glow: "rgba(34, 211, 238, 0.4)",
+          violet: "rgba(168, 85, 247, 0.4)",
         },
         accent: {
           cyan: "#22D3EE",
-          blue: "#2563EB",
+          blue: "#3B82F6",
+          violet: "#A855F7",
+          neonViolet: "#8B5CF6",
+          magenta: "#EC4899",
           coral: "#FB7185",
           emerald: "#34D399",
           amber: "#FBBF24",
@@ -48,8 +57,9 @@ const config: Config = {
         },
       },
       boxShadow: {
-        "cyan-glow": "0 0 25px -5px rgba(34, 211, 238, 0.25)",
-        "cyan-glow-lg": "0 0 40px -5px rgba(34, 211, 238, 0.4)",
+        "cyan-glow": "0 0 25px -5px rgba(34, 211, 238, 0.35)",
+        "cyan-glow-lg": "0 0 40px -5px rgba(34, 211, 238, 0.45)",
+        "violet-glow": "0 0 20px rgba(139, 92, 246, 0.4), 0 0 60px rgba(34, 211, 238, 0.15)",
         "coral-glow": "0 0 25px -5px rgba(251, 113, 133, 0.25)",
       },
     },
@@ -58,4 +68,3 @@ const config: Config = {
 };
 
 export default config;
-

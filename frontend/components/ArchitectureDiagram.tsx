@@ -41,9 +41,9 @@ export function ArchitectureDiagram() {
   ];
 
   return (
-    <div className="w-full rounded-2xl border border-white/10 bg-[#07101E] p-5 sm:p-7 shadow-2xl backdrop-blur-xl">
+    <div className="w-full rounded-2xl border border-[#1E334B] bg-[#0A1424] p-5 sm:p-7 shadow-2xl backdrop-blur-xl">
       {/* Top Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#1E334B] pb-5">
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-md border border-cyan-500/40 bg-cyan-500/10 px-2.5 py-0.5 font-mono text-[11px] font-bold tracking-wider text-cyan-400">
@@ -64,15 +64,15 @@ export function ArchitectureDiagram() {
           </p>
         </div>
 
-        {/* Step Selector Buttons (Image 2 Top Right) */}
-        <div className="flex items-center gap-1.5 shrink-0 bg-[#030712] p-1 rounded-xl border border-white/5">
+        {/* Step Selector Buttons */}
+        <div className="flex items-center gap-1.5 shrink-0 bg-[#050914] p-1 rounded-xl border border-[#1E334B]">
           {[1, 2, 3, 4].map((stepId) => (
             <button
               key={stepId}
               onClick={() => setActiveStep(stepId)}
               className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-all ${
                 activeStep === stepId
-                  ? "bg-cyan-400 text-black shadow-[0_0_16px_rgba(34,211,238,0.5)]"
+                  ? "bg-gradient-to-r from-cyan-400 to-purple-500 text-black shadow-[0_0_16px_rgba(168,85,247,0.45)]"
                   : "text-slate-400 hover:text-white hover:bg-white/5"
               }`}
             >
@@ -460,25 +460,25 @@ export function ArchitectureDiagram() {
                 width="240"
                 height="65"
                 rx="10"
-                fill="#1C090F"
-                stroke="#FB7185"
+                fill="#200A17"
+                stroke="#EC4899"
                 strokeWidth="1.5"
                 filter="url(#coralGlow)"
               />
-              <circle cx="18" cy="20" r="5" fill="#FB7185" />
+              <circle cx="18" cy="20" r="5" fill="#EC4899" />
               <text x="32" y="22" fill="#F8FAFC" fontSize="11" fontWeight="700">
                 Grad-CAM Activation Map
               </text>
               <text x="32" y="38" fill="#94A3B8" fontSize="9">
                 Gradients from final decoder stage
               </text>
-              <text x="32" y="52" fill="#FB7185" fontSize="9" fontWeight="600">
+              <text x="32" y="52" fill="#EC4899" fontSize="9" fontWeight="600">
                 Highlights flood-relevant regions
               </text>
 
               {/* Heatmap Thumbnail Graphic */}
               <g transform="translate(178, 8)">
-                <rect x="0" y="0" width="52" height="49" rx="6" fill="#0C0305" stroke="#FB7185" strokeWidth="1" />
+                <rect x="0" y="0" width="52" height="49" rx="6" fill="#0E040A" stroke="#EC4899" strokeWidth="1" />
                 <image href="/diagram/gradcam.png" x="2" y="2" width="48" height="45" preserveAspectRatio="xMidYMid slice" clipPath="inset(0 round 4px)" />
               </g>
             </g>
@@ -499,8 +499,8 @@ export function ArchitectureDiagram() {
               onClick={() => setActiveStep(st.id)}
               className={`relative flex flex-col rounded-xl p-4 cursor-pointer transition-all ${
                 isSelected
-                  ? "bg-[#0B1E38] border-2 border-cyan-400 shadow-[0_0_24px_rgba(34,211,238,0.3)] scale-[1.02]"
-                  : "bg-[#050C1A] border border-white/10 hover:border-white/20 hover:bg-[#071324]"
+                  ? "bg-[#101D30] border-2 border-cyan-400 shadow-[0_0_24px_rgba(168,85,247,0.35)] scale-[1.02]"
+                  : "bg-[#080E1A] border border-[#1E334B] hover:border-cyan-400/30 hover:bg-[#0A1424]"
               }`}
             >
               <div className="flex items-center justify-between mb-2">

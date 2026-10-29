@@ -1,4 +1,10 @@
 {
-  "water_percentage": 71.54,
-  "iou": 0.887
+  "sample_id": "3079",
+  "title": "Held-Out Test Sample #3079",
+  "water_percentage": 54.4,
+  "iou": 0.889,
+  "dice": 0.941,
+  "width": 2048,
+  "height": 1152,
+  "latency_ms": 31
 }

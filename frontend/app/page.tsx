@@ -7,6 +7,8 @@ import {
   Database,
   FileText,
   BarChart3,
+  Box,
+  Zap,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
@@ -15,7 +17,7 @@ import { ArchitectureDiagram } from "@/components/ArchitectureDiagram";
 
 const EarthGlobe = dynamic(
   () => import("@/components/EarthGlobe").then((m) => m.EarthGlobe),
-  { ssr: false, loading: () => <div className="h-[520px] w-full flex items-center justify-center" style={{ color: "var(--text-muted)" }}>Loading globe…</div> }
+  { ssr: false, loading: () => <div className="h-[420px] w-full flex items-center justify-center text-slate-400">Loading radar globe…</div> }
 );
 
 // ── Count-up hook ──────────────────────────────────────────────────
@@ -105,7 +107,7 @@ function SampleStrip() {
             {/* Label */}
             <div
               className="absolute bottom-0 left-0 right-0 px-2 py-1.5"
-              style={{ background: "linear-gradient(transparent, rgba(0,0,0,0.75))" }}
+              style={{ background: "linear-gradient(transparent, rgba(5,9,20,0.85))" }}
             >
               <p className="text-xs text-white font-medium truncate">{s.label}</p>
               <p className="text-xs font-mono" style={{ color: "var(--water)" }}>
@@ -119,14 +121,22 @@ function SampleStrip() {
   );
 }
 
-// ── Metric Card ───────────────────────────────────────────────────
-function MetricCard({
+// ── Metric Proof Card (Matching Electronic Neon Style Sheet) ─────
+function ProofMetricCard({
+  icon: Icon,
+  accentColor,
+  iconBg,
+  iconBorder,
   label,
   value,
   unit,
   caption,
   started,
 }: {
+  icon: React.ElementType;
+  accentColor: string;
+  iconBg: string;
+  iconBorder: string;
   label: string;
   value: number;
   unit?: string;
@@ -139,15 +149,23 @@ function MetricCard({
     : count.toFixed(3);
 
   return (
-    <div className="space-y-0.5 sm:space-y-1 text-center">
+    <div className="flex items-center gap-3.5 rounded-2xl border border-[#1E334B] bg-[#0A1424] p-4 transition-all hover:border-cyan-500/40 hover:shadow-[0_0_20px_rgba(34,211,238,0.12)]">
       <div
-        className="font-mono font-bold tabular-nums"
-        style={{ color: "var(--water)", fontSize: "clamp(24px, 3.5vw, 44px)" }}
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border"
+        style={{ background: iconBg, borderColor: iconBorder, color: accentColor }}
       >
-        {formatted}
+        <Icon className="h-5 w-5" />
       </div>
-      <div className="text-xs sm:text-sm font-semibold truncate text-white">{label}</div>
-      <div className="text-[10px] sm:text-xs text-slate-400 truncate">{caption}</div>
+      <div className="min-w-0 flex-1">
+        <div
+          className="font-mono text-2xl sm:text-3xl font-bold tracking-tight leading-none"
+          style={{ color: accentColor }}
+        >
+          {formatted}
+        </div>
+        <div className="text-xs sm:text-sm font-semibold text-white mt-1 truncate">{label}</div>
+        <div className="text-[10px] sm:text-xs text-slate-400 truncate">{caption}</div>
+      </div>
     </div>
   );
 }
@@ -203,7 +221,7 @@ export default function LandingPage() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => { if (entry.isIntersecting) setMetricsStarted(true); },
-      { threshold: 0.5 }
+      { threshold: 0.3 }
     );
     if (metricsRef.current) observer.observe(metricsRef.current);
     return () => observer.disconnect();
@@ -240,58 +258,93 @@ export default function LandingPage() {
           <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12">
             {/* Left */}
             <div className="lg:col-span-7 space-y-6">
-              <p className="text-label">AI Flood Segmentation</p>
+              {/* Technical Tag matching style sheet */}
+              <div className="inline-flex items-center gap-2">
+                <span className="h-px w-6 bg-cyan-400/60" />
+                <span className="text-[11px] font-mono font-bold tracking-widest uppercase text-cyan-400">
+                  AI Flood Segmentation
+                </span>
+              </div>
 
-              <h1 className="text-display" style={{ color: "var(--text)" }}>
+              {/* Redesigned Hero Headline */}
+              <h1 className="text-display tracking-tight text-white">
                 See the flood.<br />
                 <span
-                  className="bg-clip-text text-transparent"
-                  style={{ backgroundImage: "linear-gradient(135deg, var(--water), #3B82F6)" }}
+                  className="bg-clip-text text-transparent drop-shadow-[0_0_25px_rgba(168,85,247,0.35)]"
+                  style={{
+                    backgroundImage: "linear-gradient(100deg, #22D3EE 0%, #3B82F6 48%, #A855F7 100%)",
+                    WebkitBackgroundClip: "text",
+                    WebkitTextFillColor: "transparent",
+                  }}
                 >
                   Pixel by pixel.
                 </span>
               </h1>
 
-              <p className="text-body-lg" style={{ color: "var(--text-2)", maxWidth: "56ch" }}>
+              <p className="text-body-lg text-slate-300" style={{ maxWidth: "56ch" }}>
                 HydroVision uses a transfer-learning U-Net to label floodwater in drone and
                 aerial photos, then shows how confident it is and what it looked at.
               </p>
 
+              {/* Action Buttons */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 <Link
                   href="/analyze"
-                  className="flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all hover:opacity-90"
+                  className="group relative inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-sm font-bold text-[#050914] transition-all hover:scale-[1.02] active:scale-[0.98]"
                   style={{
-                    background: "var(--btn-primary-bg)",
-                    color: "var(--btn-primary-fg)",
+                    background: "linear-gradient(135deg, #22D3EE 0%, #8B5CF6 100%)",
+                    boxShadow: "0 0 20px rgba(139, 92, 246, 0.4), 0 0 60px rgba(34, 211, 238, 0.15)",
                   }}
                 >
                   <span>Analyze an image</span>
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </Link>
 
                 <a
                   href="#how-it-works"
-                  className="flex items-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-all"
-                  style={{
-                    border: "1px solid var(--border)",
-                    background: "var(--surface-1)",
-                    color: "var(--text-2)",
-                  }}
+                  className="inline-flex items-center gap-2 rounded-xl border border-[#1E334B] bg-[#0A1424] px-6 py-3.5 text-sm font-semibold text-[#F8FAFC] transition-all hover:border-cyan-400/40 hover:bg-[#101D30]"
                 >
                   <span>See how it works</span>
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="h-4 w-4 text-slate-400" />
                 </a>
               </div>
 
-              {/* Proof Row - Mobile Responsive */}
+              {/* Proof Row - 3 Metric Cards matching design tokens */}
               <div
                 ref={metricsRef}
-                className="grid grid-cols-3 gap-2 sm:gap-4 pt-4 border-t border-white/10"
+                className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-[#1E334B]"
               >
-                <MetricCard label="Test Dice" value={0.884} caption="44 held-out test images" started={metricsStarted} />
-                <MetricCard label="Test IoU" value={0.792} caption="44 held-out test images" started={metricsStarted} />
-                <MetricCard label="CPU Latency" value={31} unit="ms" caption="ONNX Runtime, per 256×256 image" started={metricsStarted} />
+                <ProofMetricCard
+                  icon={Box}
+                  accentColor="#22D3EE"
+                  iconBg="rgba(34, 211, 238, 0.1)"
+                  iconBorder="rgba(34, 211, 238, 0.3)"
+                  label="Test Dice"
+                  value={0.884}
+                  caption="44 held-out test images"
+                  started={metricsStarted}
+                />
+                <ProofMetricCard
+                  icon={BarChart3}
+                  accentColor="#3B82F6"
+                  iconBg="rgba(59, 130, 246, 0.1)"
+                  iconBorder="rgba(59, 130, 246, 0.3)"
+                  label="Test IoU"
+                  value={0.792}
+                  caption="44 held-out test images"
+                  started={metricsStarted}
+                />
+                <ProofMetricCard
+                  icon={Zap}
+                  accentColor="#A855F7"
+                  iconBg="rgba(168, 85, 247, 0.1)"
+                  iconBorder="rgba(168, 85, 247, 0.3)"
+                  label="CPU Latency"
+                  value={31}
+                  unit="ms"
+                  caption="ONNX Runtime, 256×256"
+                  started={metricsStarted}
+                />
               </div>
             </div>
 
@@ -325,10 +378,11 @@ export default function LandingPage() {
         <div className="text-center">
           <Link
             href="/analyze"
-            className="text-sm font-medium hover:underline"
+            className="text-sm font-semibold hover:underline inline-flex items-center gap-1.5"
             style={{ color: "var(--link)" }}
           >
-            Try your own image →
+            <span>Try your own image</span>
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       </section>
@@ -402,7 +456,7 @@ export default function LandingPage() {
         >
           <Link
             href="/performance"
-            className="flex flex-col gap-2 rounded-xl p-5 transition-all hover:shadow-lg group"
+            className="flex flex-col gap-2 rounded-xl p-5 transition-all hover:border-cyan-400/40 hover:shadow-lg group"
             style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
           >
             <BarChart3 className="h-6 w-6" style={{ color: "var(--water)" }} />
@@ -413,7 +467,7 @@ export default function LandingPage() {
           </Link>
           <Link
             href="/dataset"
-            className="flex flex-col gap-2 rounded-xl p-5 transition-all hover:shadow-lg group"
+            className="flex flex-col gap-2 rounded-xl p-5 transition-all hover:border-cyan-400/40 hover:shadow-lg group"
             style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
           >
             <Database className="h-6 w-6" style={{ color: "var(--water)" }} />
@@ -424,7 +478,7 @@ export default function LandingPage() {
           </Link>
           <Link
             href="/model-card"
-            className="flex flex-col gap-2 rounded-xl p-5 transition-all hover:shadow-lg group"
+            className="flex flex-col gap-2 rounded-xl p-5 transition-all hover:border-cyan-400/40 hover:shadow-lg group"
             style={{ background: "var(--surface-2)", border: "1px solid var(--border)" }}
           >
             <FileText className="h-6 w-6" style={{ color: "var(--water)" }} />
@@ -473,8 +527,11 @@ export default function LandingPage() {
           </p>
           <Link
             href="/analyze"
-            className="inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold transition-all hover:opacity-90"
-            style={{ background: "var(--btn-primary-bg)", color: "var(--btn-primary-fg)" }}
+            className="inline-flex items-center gap-2 rounded-xl px-8 py-3.5 text-sm font-bold text-[#050914] transition-all hover:scale-[1.02]"
+            style={{
+              background: "linear-gradient(135deg, #22D3EE 0%, #8B5CF6 100%)",
+              boxShadow: "0 0 20px rgba(139, 92, 246, 0.4), 0 0 60px rgba(34, 211, 238, 0.15)",
+            }}
           >
             <span>Analyze an image</span>
             <ArrowRight className="h-4 w-4" />

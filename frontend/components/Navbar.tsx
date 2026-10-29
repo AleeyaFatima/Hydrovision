@@ -57,7 +57,7 @@ export function Navbar() {
     <header
       className={`sticky top-0 z-50 w-full transition-all duration-300 backdrop-blur-xl ${
         scrolled
-          ? "bg-[#030712]/90 border-b border-white/10 shadow-2xl"
+          ? "bg-[#050914]/90 border-b border-[#1E334B] shadow-2xl"
           : "bg-transparent border-b border-transparent"
       }`}
     >
@@ -65,7 +65,7 @@ export function Navbar() {
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2.5 group" aria-label="HydroVision home">
           <div
-            className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-500/30 bg-[#07101E] text-water shadow-sm group-hover:border-cyan-400 group-hover:shadow-[0_0_16px_rgba(34,211,238,0.35)] transition-all"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-500/30 bg-[#0A1424] text-water shadow-sm group-hover:border-cyan-400 group-hover:shadow-[0_0_16px_rgba(34,211,238,0.35)] transition-all"
           >
             <DropletEyeIcon className="h-5 w-5" />
           </div>
@@ -87,7 +87,7 @@ export function Navbar() {
 
         {/* Desktop Nav Links */}
         <nav
-          className="hidden md:flex items-center gap-1 rounded-full p-1 border border-white/10 bg-[#07101E]/80 backdrop-blur-md"
+          className="hidden md:flex items-center gap-1 rounded-full p-1 border border-[#1E334B] bg-[#0A1424]/80 backdrop-blur-md"
         >
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
@@ -97,7 +97,7 @@ export function Navbar() {
                 href={link.href}
                 className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
                   isActive
-                    ? "bg-cyan-500/15 text-water border border-cyan-500/30 shadow-[0_0_12px_rgba(34,211,238,0.2)]"
+                    ? "bg-[#101D30] text-cyan-300 border border-cyan-400/50 shadow-[0_0_14px_rgba(168,85,247,0.3)]"
                     : "text-slate-300 hover:text-white hover:bg-white/5 border border-transparent"
                 }`}
               >
@@ -114,7 +114,7 @@ export function Navbar() {
             className={`hidden lg:flex items-center gap-2 rounded-full px-3 py-1 text-xs font-mono border transition-all ${
               modelOnline === true
                 ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-400"
-                : "border-white/10 bg-[#07101E] text-slate-400"
+                : "border-[#1E334B] bg-[#0A1424] text-slate-400"
             }`}
             title={
               modelOnline === true
@@ -132,10 +132,13 @@ export function Navbar() {
             <span>{modelOnline === true ? "Model online" : "Offline mode"}</span>
           </div>
 
-          {/* Primary CTA */}
+          {/* Primary CTA (Cyan to Neon Violet) */}
           <Link
             href="/analyze"
-            className="hidden sm:inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 px-4 py-2 text-xs font-bold text-black shadow-[0_0_20px_rgba(34,211,238,0.35)] hover:shadow-[0_0_28px_rgba(34,211,238,0.55)] hover:scale-[1.02] transition-all"
+            className="hidden sm:inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold text-[#050914] shadow-[0_0_20px_rgba(139,92,246,0.35),0_0_50px_rgba(34,211,238,0.15)] hover:shadow-[0_0_28px_rgba(139,92,246,0.5),0_0_60px_rgba(34,211,238,0.25)] hover:scale-[1.02] transition-all"
+            style={{
+              background: "linear-gradient(135deg, #22D3EE 0%, #8B5CF6 100%)",
+            }}
           >
             <span>Analyze an image</span>
             <ArrowRight className="h-3.5 w-3.5" />
@@ -146,7 +149,7 @@ export function Navbar() {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileMenuOpen}
-            className="flex md:hidden h-9 w-9 items-center justify-center rounded-xl border border-white/10 bg-[#07101E] text-slate-300 hover:text-white hover:border-white/20 transition-all"
+            className="flex md:hidden h-9 w-9 items-center justify-center rounded-xl border border-[#1E334B] bg-[#0A1424] text-slate-300 hover:text-white hover:border-cyan-500/40 transition-all"
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -156,9 +159,9 @@ export function Navbar() {
       {/* Mobile Drawer Navigation */}
       {mobileMenuOpen && (
         <div
-          className="md:hidden px-4 pt-3 pb-6 space-y-3 bg-[#030712]/98 border-b border-white/10 backdrop-blur-2xl"
+          className="md:hidden px-4 pt-3 pb-6 space-y-3 bg-[#050914]/98 border-b border-[#1E334B] backdrop-blur-2xl"
         >
-          <div className="flex items-center justify-between pb-3 border-b border-white/10">
+          <div className="flex items-center justify-between pb-3 border-b border-[#1E334B]">
             <span className="text-label text-slate-400">Navigation</span>
             <div
               className={`flex items-center gap-1.5 text-xs font-mono font-medium ${
@@ -185,7 +188,7 @@ export function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-semibold transition-all ${
                     isActive
-                      ? "bg-cyan-500/15 text-water border border-cyan-500/30"
+                      ? "bg-[#101D30] text-cyan-300 border border-cyan-400/40 shadow-[0_0_12px_rgba(168,85,247,0.25)]"
                       : "text-slate-300 hover:bg-white/5 border border-transparent"
                   }`}
                 >
@@ -196,11 +199,15 @@ export function Navbar() {
             })}
           </div>
 
-          <div className="pt-2 border-t border-white/10">
+          <div className="pt-2 border-t border-[#1E334B]">
             <Link
               href="/analyze"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-cyan-400 to-blue-500 py-3 text-sm font-bold text-black shadow-lg"
+              className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-[#050914] shadow-lg"
+              style={{
+                background: "linear-gradient(135deg, #22D3EE 0%, #8B5CF6 100%)",
+                boxShadow: "0 0 20px rgba(139, 92, 246, 0.4), 0 0 60px rgba(34, 211, 238, 0.15)",
+              }}
             >
               <span>Analyze an image</span>
               <ArrowRight className="h-4 w-4" />

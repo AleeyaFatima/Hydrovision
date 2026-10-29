@@ -102,32 +102,31 @@ export function EarthGlobe() {
 
     const radius = 70;
 
-    // 1. Inner core dark sphere
+    // 1. Inner core dark navy sphere
     const coreGeo = new THREE.SphereGeometry(radius * 0.99, 48, 48);
     const coreMat = new THREE.MeshBasicMaterial({
-      color: 0x081326,
+      color: 0x071120,
     });
     const coreMesh = new THREE.Mesh(coreGeo, coreMat);
     globeGroup.add(coreMesh);
 
-    // 2. Wireframe / Latitude-Longitude Grid
+    // 2. Wireframe / Latitude-Longitude Grid with subtle blue-violet tint
     const wireGeo = new THREE.SphereGeometry(radius, 28, 28);
     const wireMat = new THREE.MeshBasicMaterial({
-      color: 0x1e3a5f,
+      color: 0x1e334b,
       wireframe: true,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.45,
     });
     const wireMesh = new THREE.Mesh(wireGeo, wireMat);
     globeGroup.add(wireMesh);
 
-    // 3. Dot Grid (Continents / Dense Particles)
-    const particleCount = 2400;
+    // 3. Dot Grid (Continents / Dense Particles with Electric Cyan + Violet)
+    const particleCount = 2600;
     const particleGeo = new THREE.BufferGeometry();
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
 
-    // Golden spiral sphere distribution for uniform points
     const goldenRatio = (1 + Math.sqrt(5)) / 2;
     for (let i = 0; i < particleCount; i++) {
       const theta = 2 * Math.PI * i / goldenRatio;
@@ -140,44 +139,52 @@ export function EarthGlobe() {
       positions[i * 3 + 1] = y;
       positions[i * 3 + 2] = z;
 
-      // Cyan / Ice-blue tint
-      colors[i * 3] = 0.13;
-      colors[i * 3 + 1] = 0.82;
-      colors[i * 3 + 2] = 0.93;
+      // 70% Cyan, 30% Violet accent particles
+      if (i % 3 === 0) {
+        // Electronic Violet (#A855F7)
+        colors[i * 3] = 0.66;
+        colors[i * 3 + 1] = 0.33;
+        colors[i * 3 + 2] = 0.97;
+      } else {
+        // Electric Cyan (#22D3EE)
+        colors[i * 3] = 0.13;
+        colors[i * 3 + 1] = 0.83;
+        colors[i * 3 + 2] = 0.93;
+      }
     }
 
     particleGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
     particleGeo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
 
     const particleMat = new THREE.PointsMaterial({
-      size: 1.5,
+      size: 1.6,
       vertexColors: true,
       transparent: true,
-      opacity: 0.65,
+      opacity: 0.75,
     });
     const pointCloud = new THREE.Points(particleGeo, particleMat);
     globeGroup.add(pointCloud);
 
-    // 4. Hotspots (Pulsing markers)
+    // 4. Hotspots (Pulsing markers with magenta/violet rings)
     const markerMeshes: THREE.Mesh[] = [];
     HOTSPOTS.forEach((spot) => {
       const pos = latLonToVector3(spot.lat, spot.lon, radius + 0.5);
       
-      // Marker core
+      // Marker core (Cyan)
       const mGeo = new THREE.SphereGeometry(1.6, 12, 12);
-      const mMat = new THREE.MeshBasicMaterial({ color: 0xfb7185 }); // Coral danger
+      const mMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee });
       const mesh = new THREE.Mesh(mGeo, mMat);
       mesh.position.copy(pos);
       globeGroup.add(mesh);
       markerMeshes.push(mesh);
 
-      // Marker outer glow ring
-      const ringGeo = new THREE.RingGeometry(2.0, 3.2, 24);
+      // Marker outer glow ring (Electronic Magenta/Violet)
+      const ringGeo = new THREE.RingGeometry(2.0, 3.4, 24);
       const ringMat = new THREE.MeshBasicMaterial({
-        color: 0x22d3ee,
+        color: 0xa855f7,
         side: THREE.DoubleSide,
         transparent: true,
-        opacity: 0.8,
+        opacity: 0.85,
       });
       const ringMesh = new THREE.Mesh(ringGeo, ringMat);
       ringMesh.position.copy(pos.clone().multiplyScalar(1.01));
@@ -185,12 +192,12 @@ export function EarthGlobe() {
       globeGroup.add(ringMesh);
     });
 
-    // 5. Atmosphere outer ring glow
+    // 5. Atmosphere outer ring glow (Cyan-to-Violet aura)
     const atmosGeo = new THREE.SphereGeometry(radius * 1.08, 32, 32);
     const atmosMat = new THREE.MeshBasicMaterial({
       color: 0x22d3ee,
       transparent: true,
-      opacity: 0.06,
+      opacity: 0.08,
       side: THREE.BackSide,
     });
     const atmosMesh = new THREE.Mesh(atmosGeo, atmosMat);
@@ -201,7 +208,7 @@ export function EarthGlobe() {
     let prevMouseX = 0;
     let prevMouseY = 0;
     let rotationVelocityX = 0;
-    let rotationVelocityY = 0.0018; // auto slow rotation
+    let rotationVelocityY = 0.0018;
 
     const onMouseDown = (e: MouseEvent) => {
       isDragging = true;
@@ -223,7 +230,7 @@ export function EarthGlobe() {
       isDragging = false;
     };
 
-    // Touch handlers for mobile phones
+    // Touch handlers for mobile
     const onTouchStart = (e: TouchEvent) => {
       if (e.touches.length === 1) {
         isDragging = true;
@@ -278,7 +285,6 @@ export function EarthGlobe() {
       globeGroup.rotation.x += rotationVelocityX;
 
       if (!isDragging) {
-        // Return to standard gentle spin
         rotationVelocityY += (0.002 - rotationVelocityY) * 0.05;
         rotationVelocityX += (0 - rotationVelocityX) * 0.05;
       }
@@ -312,13 +318,13 @@ export function EarthGlobe() {
 
   if (!webglSupported) {
     return (
-      <div className="relative flex h-[380px] w-full max-w-[420px] items-center justify-center rounded-3xl border border-white/10 bg-surface p-6 text-center">
+      <div className="relative flex h-[380px] w-full max-w-[420px] items-center justify-center rounded-3xl border border-[#1E334B] bg-[#0A1424] p-6 text-center">
         <div className="space-y-3">
-          <div className="mx-auto h-24 w-24 rounded-full border-2 border-dashed border-accent-cyan/40 bg-accent-cyan/5 flex items-center justify-center">
-            <div className="h-12 w-12 rounded-full bg-accent-cyan/20 animate-pulse" />
+          <div className="mx-auto h-24 w-24 rounded-full border-2 border-dashed border-cyan-400/40 bg-cyan-400/5 flex items-center justify-center">
+            <div className="h-12 w-12 rounded-full bg-cyan-400/20 animate-pulse" />
           </div>
           <p className="text-sm font-semibold text-slate-200">Global Flood Hotspot Radar</p>
-          <p className="text-xs text-slate-400">Monitoring 4 major worldwide flood events with sub-pixel aerial telemetry.</p>
+          <p className="text-xs text-slate-400">Monitoring major worldwide flood events with sub-pixel aerial telemetry.</p>
         </div>
       </div>
     );
@@ -326,21 +332,33 @@ export function EarthGlobe() {
 
   return (
     <div className="relative flex flex-col items-center justify-center">
-      {/* Ambient background glow behind globe */}
+      {/* Ambient background glow behind globe (Cyan & Violet) */}
       <div className="absolute inset-0 -m-8 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 right-0 h-40 w-40 rounded-full bg-purple-600/15 blur-3xl pointer-events-none" />
 
-      {/* 3D Canvas Container - fully responsive down to 320px screens */}
+      {/* Floating Radar Badge (matching master design sheet) */}
+      <div className="absolute top-4 right-4 z-20 flex items-center gap-2 rounded-xl border border-[#1E334B] bg-[#0A1424]/90 px-3 py-1.5 backdrop-blur-md shadow-[0_0_20px_rgba(168,85,247,0.25)]">
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-400" />
+        </span>
+        <div className="flex flex-col text-left">
+          <span className="text-[10px] font-mono font-bold text-white tracking-wide">Flood Detected</span>
+          <span className="text-[9px] font-mono text-cyan-300">Confidence: 0.92</span>
+        </div>
+      </div>
+
+      {/* 3D Canvas Container */}
       <div
         ref={containerRef}
         className="relative w-full max-w-[320px] h-[320px] sm:max-w-[420px] sm:h-[420px] cursor-grab active:cursor-grabbing select-none"
       />
 
       {/* Clean Telemetry Tag underneath */}
-      <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#07101E]/80 px-3 py-1 text-[10px] sm:text-[11px] font-mono text-slate-400 backdrop-blur-md max-w-full truncate">
+      <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#1E334B] bg-[#0A1424]/85 px-3 py-1 text-[10px] sm:text-[11px] font-mono text-slate-400 backdrop-blur-md max-w-full truncate shadow-sm">
         <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 animate-pulse shrink-0" />
         <span className="truncate">Optical Drone Telemetry • Drag to Rotate</span>
       </div>
     </div>
   );
 }
-

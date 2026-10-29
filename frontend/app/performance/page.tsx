@@ -121,10 +121,11 @@ export default function PerformancePage() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className="rounded-lg px-3 py-1.5 text-sm font-medium transition-all whitespace-nowrap"
+              className="rounded-lg px-3.5 py-1.5 text-xs sm:text-sm font-bold transition-all whitespace-nowrap"
               style={{
-                background: activeTab === tab.id ? "var(--water)" : "transparent",
-                color: activeTab === tab.id ? "#000" : "var(--text-2)",
+                background: activeTab === tab.id ? "linear-gradient(135deg, #22D3EE 0%, #8B5CF6 100%)" : "transparent",
+                color: activeTab === tab.id ? "#050914" : "var(--text-2)",
+                boxShadow: activeTab === tab.id ? "0 0 16px rgba(168,85,247,0.4)" : "none",
               }}
             >
               {tab.label}
@@ -203,10 +204,10 @@ export default function PerformancePage() {
                   <YAxis domain={[0, 1]} stroke="var(--text-muted)" fontSize={12} />
                   <Tooltip contentStyle={tooltipStyle} />
                   <Legend wrapperStyle={{ fontSize: "12px", color: "var(--text-2)" }} />
-                  <Bar dataKey="dice" name="Dice Score" fill="var(--water)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="dice" name="Dice Score" fill="#22D3EE" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="iou" name="IoU (Jaccard)" fill="#3B82F6" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="precision" name="Precision" fill="var(--ok)" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="recall" name="Recall" fill="var(--uncertain)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="precision" name="Precision" fill="#A855F7" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="recall" name="Recall" fill="#EC4899" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

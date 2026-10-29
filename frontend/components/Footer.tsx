@@ -46,10 +46,10 @@ export function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="https://github.com/AleeyaFatima/aquamap"
+                  href="https://github.com/AleeyaFatima/Hydrovision"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-small hover:underline"
+                  className="text-small hover:underline hover:text-cyan-400 transition-colors"
                   style={{ color: "var(--link)" }}
                 >
                   GitHub Repository
