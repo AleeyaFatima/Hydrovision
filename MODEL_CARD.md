@@ -105,3 +105,4 @@ Models were subjected to 5 synthetic environmental corruptions across 3 severity
    - *Mitigation:* The optimal sigmoid threshold (0.45) balances precision and recall to suppress shadow noise.
 3. **Specular Sun Glint:** Direct solar reflection off calm water creates white hot spots.
    - *Mitigation:* Albumentations ColorJitter and RandomBrightnessContrast augmentations applied during training prevent saturation bias.
+

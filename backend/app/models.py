@@ -74,3 +74,4 @@ def get_device(device_setting: str = "auto") -> torch.device:
         else:
             return torch.device("cpu")
     return torch.device(device_setting)
+

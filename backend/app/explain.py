@@ -57,3 +57,4 @@ def generate_gradcam(
 
     cam_overlay = show_cam_on_image(raw_rgb_norm, grayscale_cam, use_rgb=True)
     return cam_overlay
+

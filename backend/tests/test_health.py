@@ -43,3 +43,4 @@ def test_metrics_404_when_empty(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "REPORTS_DIR", tmp_path)
     response = client.get("/metrics")
     assert response.status_code == 404
+

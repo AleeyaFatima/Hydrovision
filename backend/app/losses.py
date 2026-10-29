@@ -60,3 +60,4 @@ class CombinedBCEDiceLoss(nn.Module):
         bce_loss = self.bce(logits, targets.float())
         dice_loss = self.dice(logits, targets.float())
         return self.bce_weight * bce_loss + self.dice_weight * dice_loss
+
